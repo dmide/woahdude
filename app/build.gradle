@@ -1,0 +1,94 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 28
+
+    dataBinding {
+        enabled = true
+    }
+
+    defaultConfig {
+        applicationId "com.reddit.woahdude"
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        kapt {
+            arguments {
+                arg("room.schemaLocation", "$projectDir/schemas".toString())
+            }
+        }
+
+        multiDexEnabled true
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs = ['src/test/kotlin']
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+//    implementation Libs.kotlin
+//    implementation Libs.ktx
+//
+//    implementation Libs.lifecycle
+//    implementation Libs.appcompat
+//    implementation Libs.design
+//    implementation Libs.recyclerview
+//    implementation Libs.constraint_layout
+//
+//    implementation Libs.room
+//    kapt Libs.roomCompiler
+//
+//    implementation Libs.retrofit
+//    implementation Libs.retrofitRx
+//    implementation Libs.retrofitMoshi
+//
+//    implementation Libs.dagger2
+//    kapt Libs.dagger2Compiler
+//    compileOnly Libs.daggerAnnotations
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "androidx.core:core-ktx:1.0.0"
+
+    implementation "androidx.appcompat:appcompat:1.0.0"
+    implementation "com.google.android.material:material:1.0.0"
+    implementation "androidx.recyclerview:recyclerview:1.0.0"
+    implementation "androidx.constraintlayout:constraintlayout:1.1.2"
+    implementation "androidx.lifecycle:lifecycle-extensions:2.0.0-rc01"
+
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation 'com.google.code.gson:gson:2.8.5'
+
+    implementation "com.google.dagger:dagger:$dagger2_version"
+    kapt "com.google.dagger:dagger-compiler:$dagger2_version"
+    compileOnly "org.glassfish:javax.annotation:3.1.1"
+
+    implementation "com.squareup.picasso:picasso:2.5.2"
+
+    //Rx
+    implementation "io.reactivex.rxjava2:rxjava:2.2.0"
+    implementation "io.reactivex.rxjava2:rxandroid:2.1.0"
+
+    implementation "androidx.paging:paging-runtime:2.0.0-rc01"
+
+//    testImplementation 'junit:junit:4.12'
+}

@@ -1,0 +1,24 @@
+buildscript {
+//    ext.kotlin_version = "$Versions.kotlin"
+
+    ext.kotlin_version = "1.2.51"
+    ext.room_version = "2.0.0-rc01"
+    ext.retrofit_version = "2.4.0"
+    ext.dagger2_version = "2.16"
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:3.2.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
