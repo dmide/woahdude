@@ -23,6 +23,10 @@ class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCal
         holder.bind(getItem(position))
     }
 
+    public override fun getItem(position: Int): RedditPost? {
+        return super.getItem(position)
+    }
+
     class ListDiffUtilCallback : DiffUtil.ItemCallback<RedditPost>() {
 
         override fun areItemsTheSame(oldItem: RedditPost, newItem: RedditPost): Boolean {

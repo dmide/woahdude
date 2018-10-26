@@ -1,21 +1,22 @@
 package com.reddit.woahdude.ui
 
+import android.content.Context
 import android.content.res.Resources
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.reddit.woahdude.R
-import com.reddit.woahdude.common.Const
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.RedditPost
+import com.reddit.woahdude.network.loadImage
 import javax.inject.Inject
-
 
 class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
     @Inject
     lateinit var resources: Resources
+    @Inject
+    lateinit var context: Context
 
-    val imageExtensions = listOf(".jpg", ".png", ".jpeg", ",gif")
     val postTitle = MutableLiveData<String>()
     val postComments = MutableLiveData<String>()
 
@@ -28,15 +29,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             postTitle.value = redditPost.title
             postComments.value = commentCountString
 
-            var imageUrl: String? = null
-            if (redditPost.url != null && (imageExtensions.any { redditPost.url.endsWith(it) })){
-                imageUrl = redditPost.url
-            }
-
-            GlideApp.with(itemView.context)
-                    .load(imageUrl)
-                    .override(Const.deviceWidth)
-                    .into(binding.imageView)
+            redditPost.loadImage(GlideApp.with(context)).into(binding.imageView)
         }
 
         binding.viewHolder = this
