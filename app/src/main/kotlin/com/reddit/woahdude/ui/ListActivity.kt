@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.reddit.woahdude.R
+import com.reddit.woahdude.common.Const
 import com.reddit.woahdude.common.ViewModelFactory
 import com.reddit.woahdude.common.WDApplication
 import com.reddit.woahdude.databinding.ActivityListBinding
@@ -22,6 +23,8 @@ class ListActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Const.calcDeviceMetrics(this)
 
         val component = (application as WDApplication).component
         viewModel = ViewModelProviders.of(this, ViewModelFactory(component)).get(ListViewModel::class.java)
