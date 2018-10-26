@@ -4,10 +4,12 @@ import android.content.res.Resources
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.reddit.woahdude.R
+import com.reddit.woahdude.common.Const
+import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.RedditPost
-import com.squareup.picasso.Picasso
 import javax.inject.Inject
+
 
 class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
     @Inject
@@ -30,8 +32,10 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             if (redditPost.url != null && (imageExtensions.any { redditPost.url.endsWith(it) })){
                 imageUrl = redditPost.url
             }
-            Picasso.with(itemView.context)
+
+            GlideApp.with(itemView.context)
                     .load(imageUrl)
+                    .override(Const.deviceWidth)
                     .into(binding.imageView)
         }
 
