@@ -13,6 +13,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     @Inject
     lateinit var resources: Resources
 
+    val imageExtensions = listOf(".jpg", ".png", ".jpeg", ",gif")
     val postTitle = MutableLiveData<String>()
     val postComments = MutableLiveData<String>()
 
@@ -24,8 +25,13 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
             postTitle.value = redditPost.title
             postComments.value = commentCountString
+
+            var imageUrl: String? = null
+            if (redditPost.url != null && (imageExtensions.any { redditPost.url.endsWith(it) })){
+                imageUrl = redditPost.url
+            }
             Picasso.with(itemView.context)
-                    .load(redditPost.thumbnail)
+                    .load(imageUrl)
                     .into(binding.imageView)
         }
 
