@@ -1,6 +1,5 @@
 package com.reddit.woahdude.ui
 
-import android.annotation.SuppressLint
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.LiveData
@@ -9,15 +8,10 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.BaseViewModel
-import com.reddit.woahdude.model.RedditDb
 import com.reddit.woahdude.model.RedditDao
 import com.reddit.woahdude.model.RedditRepository
-import com.reddit.woahdude.network.PostsResponse
-import com.reddit.woahdude.network.RedditApi
 import com.reddit.woahdude.network.RedditPost
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
+import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
 class ListViewModel : BaseViewModel() {
@@ -30,14 +24,13 @@ class ListViewModel : BaseViewModel() {
     val errorMessage: MutableLiveData<Int> = MutableLiveData()
     val posts: LiveData<PagedList<RedditPost>> by lazy { initializedPagedListLiveData() }
 
-    private val subscriptions: MutableList<Disposable> = mutableListOf()
+    private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
-    @SuppressLint("CheckResult")
     override fun onCreated() {
         loadingVisibility.value = View.GONE
 
-        repository.status.subscribe { status ->
-            when(status) {
+        val disposable = repository.status.subscribe { status ->
+            when (status) {
                 is RedditRepository.Status.LoadingStarted -> {
                     loadingVisibility.value = View.VISIBLE
                     errorMessage.value = null
@@ -51,15 +44,17 @@ class ListViewModel : BaseViewModel() {
                 }
             }
         }
+        compositeDisposable.add(disposable)
     }
 
     override fun onCleared() {
         super.onCleared()
-        subscriptions.forEach { d -> d.dispose() }
-        subscriptions.clear()
+        compositeDisposable.dispose()
     }
 
-    fun refresh() = repository.refresh()
+    fun refresh() {
+        compositeDisposable.add(repository.refresh())
+    }
 
     private fun initializedPagedListLiveData(): LiveData<PagedList<RedditPost>> {
         val config = PagedList.Config.Builder()
@@ -80,7 +75,7 @@ class ListViewModel : BaseViewModel() {
                 return
             }
             repository.isRequestInProgress = true
-            subscriptions.add(repository.requestPosts())
+            compositeDisposable.add(repository.requestPosts())
         }
 
         override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
@@ -89,7 +84,7 @@ class ListViewModel : BaseViewModel() {
                 return
             }
             repository.isRequestInProgress = true
-            subscriptions.add(repository.requestPosts(after = itemAtEnd.name))
+            compositeDisposable.add(repository.requestPosts(after = itemAtEnd.name))
         }
     }
 }
