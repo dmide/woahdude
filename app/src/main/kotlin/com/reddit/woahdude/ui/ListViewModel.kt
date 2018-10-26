@@ -11,6 +11,7 @@ import com.reddit.woahdude.common.BaseViewModel
 import com.reddit.woahdude.model.RedditDao
 import com.reddit.woahdude.model.RedditRepository
 import com.reddit.woahdude.network.RedditPost
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
@@ -29,21 +30,23 @@ class ListViewModel : BaseViewModel() {
     override fun onCreated() {
         loadingVisibility.value = View.GONE
 
-        val disposable = repository.status.subscribe { status ->
-            when (status) {
-                is RedditRepository.Status.LoadingStarted -> {
-                    loadingVisibility.value = View.VISIBLE
-                    errorMessage.value = null
+        val disposable = repository.status
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { status ->
+                    when (status) {
+                        is RedditRepository.Status.LoadingStarted -> {
+                            loadingVisibility.value = View.VISIBLE
+                            errorMessage.value = null
+                        }
+                        is RedditRepository.Status.LoadingFinished -> {
+                            loadingVisibility.value = View.GONE
+                        }
+                        is RedditRepository.Status.LoadingFailed -> {
+                            Log.e(javaClass.name, "onRetrievePostListError", status.t)
+                            errorMessage.value = R.string.error_loading
+                        }
+                    }
                 }
-                is RedditRepository.Status.LoadingFinished -> {
-                    loadingVisibility.value = View.GONE
-                }
-                is RedditRepository.Status.LoadingFailed -> {
-                    Log.e(javaClass.name, "onRetrievePostListError", status.t)
-                    errorMessage.value = R.string.error_loading
-                }
-            }
-        }
         compositeDisposable.add(disposable)
     }
 
