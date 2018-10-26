@@ -2,10 +2,8 @@ package com.reddit.woahdude.inject.module
 
 import android.content.Context
 import androidx.room.Room
-import com.reddit.woahdude.model.RedditDb
 import com.reddit.woahdude.model.RedditDao
-import com.reddit.woahdude.model.RedditRepository
-import com.squareup.picasso.Picasso
+import com.reddit.woahdude.model.RedditDb
 import dagger.Module
 import dagger.Provides
 import dagger.Reusable
