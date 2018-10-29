@@ -12,14 +12,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.ListPreloader
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
-import com.bumptech.glide.util.FixedPreloadSizeProvider
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.google.android.material.snackbar.Snackbar
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.*
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.network.RedditPost
-import com.reddit.woahdude.network.loadImage
+import com.reddit.woahdude.network.imageLoadRequest
 
 class ListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityListBinding
@@ -73,7 +72,7 @@ class ListActivity : AppCompatActivity() {
             }
 
             override fun getPreloadRequestBuilder(redditPost: RedditPost): RequestBuilder<*>? {
-                return redditPost.loadImage(GlideApp.with(this@ListActivity))
+                return redditPost.imageLoadRequest(GlideApp.with(this@ListActivity))
             }
         }
 

@@ -29,7 +29,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             postTitle.value = redditPost.title
             postComments.value = commentCountString
 
-            redditPost.loadImage(GlideApp.with(context)).into(binding.imageView)
+            redditPost.loadImage(GlideApp.with(context), binding.imageView)
         }
 
         binding.viewHolder = this

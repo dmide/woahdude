@@ -1,5 +1,9 @@
 package com.reddit.woahdude.network
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.widget.ImageView
+import androidx.core.view.isVisible
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
@@ -28,13 +32,28 @@ data class RedditPost(
     var indexInResponse: Int = -1
 }
 
-val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
+fun RedditPost.imageLoadRequest(glide: GlideRequests): GlideRequest<*> {
+    return imageLoadRequest(glide, getImageUrl())
+}
 
-fun RedditPost.loadImage(glide: GlideRequests) : GlideRequest<*> {
+fun RedditPost.loadImage(glide: GlideRequests, iv: ImageView) {
+    val imageUrl = getImageUrl()
+    iv.isVisible = imageUrl != null
+    imageLoadRequest(glide, imageUrl).into(iv)
+}
+
+private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
+
+private fun RedditPost.getImageUrl(): String? {
     var imageUrl: String? = null
     if (url != null && (imageExtensions.any { url.endsWith(it) })) {
         imageUrl = url
     }
+    return imageUrl
+}
 
-    return glide.load(imageUrl).override(Const.deviceWidth)
+private fun imageLoadRequest(glide: GlideRequests, imageUrl: String?): GlideRequest<*> {
+    return glide.load(imageUrl)
+            .placeholder(ColorDrawable(Color.TRANSPARENT))
+            .override(Const.deviceWidth)
 }
