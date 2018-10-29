@@ -7,7 +7,7 @@ import retrofit2.http.Query
 interface RedditApi {
 
     @GET("/r/woahdude/hot.json")
-    fun getPosts(@Query("limit") loadSize: Int = 30,
+    fun getPosts(@Query("limit") loadSize: Int = 10,
                  @Query("after") after: String? = null,
                  @Query("before") before: String? = null): Observable<PostsResponse>
 
