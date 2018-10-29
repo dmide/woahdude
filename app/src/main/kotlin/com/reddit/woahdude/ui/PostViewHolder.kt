@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
+import com.reddit.woahdude.BuildConfig
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
@@ -26,7 +27,11 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             postComments.value = ""
         } else {
             val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
-            postTitle.value = redditPost.title
+            var title = redditPost.title
+            if (BuildConfig.DEBUG) {
+                title += " " + redditPost.indexInResponse
+            }
+            postTitle.value = title
             postComments.value = commentCountString
 
             redditPost.loadImage(GlideApp.with(context), binding.imageView)
