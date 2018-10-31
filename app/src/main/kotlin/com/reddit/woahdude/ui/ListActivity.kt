@@ -1,6 +1,7 @@
 package com.reddit.woahdude.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -19,12 +20,20 @@ import com.reddit.woahdude.common.*
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.network.RedditPost
 import com.reddit.woahdude.network.imageLoadRequest
+import com.reddit.woahdude.video.VideoPlayerHolder
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.subjects.PublishSubject
+import java.util.concurrent.TimeUnit
+
 
 class ListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityListBinding
     private lateinit var viewModel: ListViewModel
+    private lateinit var visibleViewsDisposable: Disposable
     private val listAdapter: ListAdapter = ListAdapter()
     private var errorSnackbar: Snackbar? = null
+    var playerHolder: VideoPlayerHolder? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +47,7 @@ class ListActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             adapter = listAdapter
             addOnScrollListener(setupRecyclerViewPreloader(listAdapter))
+            visibleViewsDisposable = setupVisibleViewsObserver(this, layoutManager as LinearLayoutManager)
         }
         binding.swipeRefreshLayout.let { srl ->
             srl.setOnRefreshListener { viewModel.refresh() }
@@ -52,6 +62,25 @@ class ListActivity : AppCompatActivity() {
         viewModel.posts.observe(this, Observer { posts ->
             listAdapter.submitList(posts)
         })
+    }
+
+    override fun onPause() {
+        playerHolder?.release()
+        playerHolder = null
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (playerHolder != null) {
+            return
+        }
+        playerHolder = VideoPlayerHolder(this)
+    }
+
+    override fun onDestroy() {
+        visibleViewsDisposable.dispose()
+        super.onDestroy()
     }
 
     private fun showError(@StringRes errorMessage: Int) {
@@ -80,4 +109,39 @@ class ListActivity : AppCompatActivity() {
         val preloader = RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 30 /*maxPreload*/)
         return preloader
     }
+
+    private fun setupVisibleViewsObserver(recyclerView: RecyclerView, llm: LinearLayoutManager): Disposable {
+        val publishSubject = PublishSubject.create<VisibleState>()
+        val disposable = publishSubject
+                .distinctUntilChanged()
+                .throttleWithTimeout(250, TimeUnit.MILLISECONDS)
+                .map { state ->
+                    (state.firstVisibleItem..state.lastVisibleItem)
+                            .map { index -> llm.findViewByPosition(index) }
+                            .maxBy { child -> recyclerView.getChildVisiblePercent(child) }
+                }
+                .distinctUntilChanged()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { mostVisibleChild ->
+                            if (mostVisibleChild != null) {
+                                playerHolder?.pause()
+                                val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
+                                (holder as PostViewHolder).showVideoIfNeeded(playerHolder)
+                            }
+                        },
+                        { Log.e(javaClass.name, "error while observing visible items", it) })
+
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                publishSubject.onNext(VisibleState(llm.findFirstVisibleItemPosition(),
+                        llm.findLastVisibleItemPosition()))
+            }
+        })
+
+        return disposable;
+    }
+
+    data class VisibleState(val firstVisibleItem: Int, val lastVisibleItem: Int)
 }

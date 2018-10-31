@@ -2,8 +2,8 @@ package com.reddit.woahdude.network
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.widget.ImageView
-import androidx.core.view.isVisible
+import android.graphics.drawable.Drawable
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
@@ -26,34 +26,30 @@ data class RedditPost(
         val commentsCount: Int,
         @SerializedName("created_utc")
         val created: Long,
+        @Embedded(prefix = "media")
+        val media: Media?,
         val thumbnail: String?,
         val url: String?) {
     // to be consistent w/ changing backend order, we need to keep a data like this
     var indexInResponse: Int = -1
 }
 
-fun RedditPost.imageLoadRequest(glide: GlideRequests): GlideRequest<*> {
-    return imageLoadRequest(glide, getImageUrl())
-}
-
-fun RedditPost.loadImage(glide: GlideRequests, iv: ImageView) {
-    val imageUrl = getImageUrl()
-    iv.isVisible = imageUrl != null
-    imageLoadRequest(glide, imageUrl).into(iv)
+fun RedditPost.imageLoadRequest(glide: GlideRequests, imageUrl: String? = getImageUrl()): GlideRequest<Drawable> {
+    return glide.load(imageUrl)
+            .placeholder(ColorDrawable(Color.TRANSPARENT))
+            .override(Const.deviceWidth)
 }
 
 private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
 
-private fun RedditPost.getImageUrl(): String? {
+fun RedditPost.getImageUrl(): String? {
     var imageUrl: String? = null
-    if (url != null && (imageExtensions.any { url.endsWith(it) })) {
-        imageUrl = url
+    if (url != null) {
+        if (imageExtensions.any { url.endsWith(it) }) {
+            imageUrl = url
+        } else if (url.endsWith(".gifv")) {
+            imageUrl = url.replace(".gifv", "h.jpg") //TODO may break eventually, but fine for an example app
+        }
     }
     return imageUrl
-}
-
-private fun imageLoadRequest(glide: GlideRequests, imageUrl: String?): GlideRequest<*> {
-    return glide.load(imageUrl)
-            .placeholder(ColorDrawable(Color.TRANSPARENT))
-            .override(Const.deviceWidth)
 }
