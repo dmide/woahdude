@@ -24,6 +24,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     lateinit var context: Context
 
     val postTitle = MutableLiveData<String>()
+    val postType = MutableLiveData<String>()
     val postComments = MutableLiveData<String>()
     var redditPost: RedditPost? = null
 
@@ -32,14 +33,16 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
         if (redditPost == null) {
             postTitle.value = ""
+            postType.value = ""
             postComments.value = ""
         } else {
             val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
             var title = redditPost.title
             if (BuildConfig.DEBUG) {
-                title += " " + redditPost.indexInResponse
+                title = redditPost.indexInResponse.toString() + ". " + title
             }
             postTitle.value = title
+            postType.value = redditPost.type
             postComments.value = commentCountString
 
             val imageUrl = redditPost.getImageUrl()

@@ -29,6 +29,8 @@ data class RedditPost(
         @Embedded(prefix = "media")
         val media: Media?,
         val thumbnail: String?,
+        @SerializedName("link_flair_text")
+        val type: String?,
         val url: String?) {
     // to be consistent w/ changing backend order, we need to keep a data like this
     var indexInResponse: Int = -1
