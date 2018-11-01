@@ -2,6 +2,7 @@ package com.reddit.woahdude.ui
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -115,20 +116,18 @@ class ListActivity : AppCompatActivity() {
         val disposable = publishSubject
                 .distinctUntilChanged()
                 .throttleWithTimeout(250, TimeUnit.MILLISECONDS)
-                .map { state ->
+                .map<View> { state ->
                     (state.firstVisibleItem..state.lastVisibleItem)
-                            .map { index -> llm.findViewByPosition(index) }
+                            .mapNotNull { index -> llm.findViewByPosition(index) }
                             .maxBy { child -> recyclerView.getChildVisiblePercent(child) }
                 }
                 .distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { mostVisibleChild ->
-                            if (mostVisibleChild != null) {
-                                playerHolder?.pause()
-                                val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
-                                (holder as PostViewHolder).showVideoIfNeeded(playerHolder)
-                            }
+                            playerHolder?.pause()
+                            val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
+                            (holder as PostViewHolder).showVideoIfNeeded(playerHolder)
                         },
                         { Log.e(javaClass.name, "error while observing visible items", it) })
 
