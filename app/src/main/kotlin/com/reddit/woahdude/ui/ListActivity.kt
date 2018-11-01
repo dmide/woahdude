@@ -32,9 +32,10 @@ class ListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityListBinding
     private lateinit var viewModel: ListViewModel
     private lateinit var visibleViewsDisposable: Disposable
+    private lateinit var playerHolder: VideoPlayerHolder
     private val listAdapter: ListAdapter = ListAdapter()
     private var errorSnackbar: Snackbar? = null
-    var playerHolder: VideoPlayerHolder? = null
+    private var isShouldResumePlayback = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,23 +64,23 @@ class ListActivity : AppCompatActivity() {
         viewModel.posts.observe(this, Observer { posts ->
             listAdapter.submitList(posts)
         })
+
+        playerHolder = VideoPlayerHolder(this)
     }
 
     override fun onPause() {
-        playerHolder?.release()
-        playerHolder = null
+        isShouldResumePlayback = playerHolder.isPlaying()
+        playerHolder.pause()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        if (playerHolder != null) {
-            return
-        }
-        playerHolder = VideoPlayerHolder(this)
+        if (isShouldResumePlayback) playerHolder.resume()
     }
 
     override fun onDestroy() {
+        playerHolder.release()
         visibleViewsDisposable.dispose()
         super.onDestroy()
     }

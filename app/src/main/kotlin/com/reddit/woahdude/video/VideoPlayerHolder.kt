@@ -97,6 +97,12 @@ open class VideoPlayerHolder(activity: Activity) {
         player.playWhenReady = false
     }
 
+    fun resume() {
+        player.playWhenReady = true
+    }
+
+    fun isPlaying() = player.playWhenReady
+
     fun playVideoSource(videoPath: String, positionMs: Long, videoView: TextureView, progress: ProgressBar) {
         this.progress = progress
         player.setVideoTextureView(videoView)
