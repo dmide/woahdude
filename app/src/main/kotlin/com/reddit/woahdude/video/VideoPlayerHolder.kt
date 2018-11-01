@@ -29,6 +29,7 @@ open class VideoPlayerHolder(activity: Activity) {
 
     private var playerListener: ExoPlayer.EventListener? = null
     private var progress: ProgressBar? = null
+    private var currentVideoPath: String? = null
     private var videoSizeChangeListener: ((width: Int, height: Int) -> Unit)? = null
 
     init {
@@ -107,6 +108,12 @@ open class VideoPlayerHolder(activity: Activity) {
         this.progress = progress
         player.setVideoTextureView(videoView)
 
+        if (videoPath.equals(currentVideoPath)) {
+            resume()
+            return
+        }
+
+        currentVideoPath = videoPath
         val uri = Uri.parse(videoPath)
 
         val videoSource = ExtractorMediaSource(uri,
