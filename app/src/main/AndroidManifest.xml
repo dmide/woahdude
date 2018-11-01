@@ -12,13 +12,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         tools:replace="android:allowBackup">
-        <activity android:name="com.reddit.woahdude.ui.ListActivity">
+
+        <activity android:name=".ui.ListActivity"/>
+        <activity android:name=".ui.VideoActivity"/>
+
+        <!-- To make launcher icon stay on the home screen -->
+        <!-- when the launcher Activity is changed. -->
+        <activity-alias
+            android:name=".LauncherActivityAlias"
+            android:targetActivity=".ui.ListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <activity android:name=".ui.VideoActivity"></activity>
+        </activity-alias>
     </application>
 </manifest>
