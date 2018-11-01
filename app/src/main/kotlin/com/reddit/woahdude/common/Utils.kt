@@ -14,6 +14,21 @@ val Int.dp: Int
 val Int.px: Int
     get() = (this * Resources.getSystem().displayMetrics.density).toInt()
 
+/**
+ * weights fully visible children based on proximity to parent's center
+ */
+fun RecyclerView.weightChildVisibility(child: View?): Int {
+    var percent = getChildVisiblePercent(child)
+    if (child != null && percent == 100) {
+        val childCenter = (child.bottom - child.top) / 2
+        val center = (bottom - top) / 2
+        val distance = Math.abs(center - childCenter)
+        val distancePercent = (distance / measuredHeight.toFloat()) * 100
+        percent += (100 - distancePercent.toInt())
+    }
+    return percent
+}
+
 fun RecyclerView.getChildVisiblePercent(child: View?): Int {
     if (child == null) {
         return 0

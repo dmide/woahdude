@@ -114,12 +114,11 @@ class ListActivity : AppCompatActivity() {
     private fun setupVisibleViewsObserver(recyclerView: RecyclerView, llm: LinearLayoutManager): Disposable {
         val publishSubject = PublishSubject.create<VisibleState>()
         val disposable = publishSubject
-                .distinctUntilChanged()
                 .throttleWithTimeout(250, TimeUnit.MILLISECONDS)
                 .map<View> { state ->
                     (state.firstVisibleItem..state.lastVisibleItem)
                             .mapNotNull { index -> llm.findViewByPosition(index) }
-                            .maxBy { child -> recyclerView.getChildVisiblePercent(child) }
+                            .maxBy { child -> recyclerView.weightChildVisibility(child) }
                 }
                 .distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
