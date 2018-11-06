@@ -13,7 +13,7 @@ interface RedditDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(redditPosts: List<RedditPost>)
 
-    @Query("SELECT * FROM posts")
+    @Query("SELECT * FROM posts ORDER BY indexInResponse ASC")
     fun posts(): DataSource.Factory<Int, RedditPost>
 
     @Query("DELETE FROM posts")

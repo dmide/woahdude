@@ -62,7 +62,7 @@ class ListViewModel : BaseViewModel() {
     private fun initializedPagedListLiveData(): LiveData<PagedList<RedditPost>> {
         val config = PagedList.Config.Builder()
                 .setPageSize(30)
-                .setEnablePlaceholders(false)
+                .setEnablePlaceholders(true)
                 .build()
 
         val livePageListBuilder = LivePagedListBuilder<Int, RedditPost>(redditDao.posts(), config)
@@ -87,7 +87,7 @@ class ListViewModel : BaseViewModel() {
                 return
             }
             repository.isRequestInProgress = true
-            compositeDisposable.add(repository.requestPosts(after = itemAtEnd.name))
+            compositeDisposable.add(repository.requestPosts(after = repository.nextPageKey))
         }
     }
 }

@@ -14,6 +14,7 @@ class RedditRepository @Inject constructor(val redditApi: RedditApi, val redditD
     var isRequestInProgress = false
 
     val status: PublishSubject<Status> = PublishSubject.create()
+    var nextPageKey: String? = null
 
     fun requestPosts(after: String? = null): Disposable {
         return redditApi.getPosts(after = after)
@@ -24,6 +25,7 @@ class RedditRepository @Inject constructor(val redditApi: RedditApi, val redditD
                 .observeOn(Schedulers.io())
                 .subscribe(
                         { response ->
+                            nextPageKey = response.data.after
                             insertPostsIntoDB(response)
                             isRequestInProgress = false
                         },

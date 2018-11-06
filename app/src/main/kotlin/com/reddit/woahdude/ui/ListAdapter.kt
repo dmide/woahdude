@@ -30,13 +30,11 @@ class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCal
     class ListDiffUtilCallback : DiffUtil.ItemCallback<RedditPost>() {
 
         override fun areItemsTheSame(oldItem: RedditPost, newItem: RedditPost): Boolean {
-            return oldItem.name == newItem.name
+            return oldItem.indexInResponse == newItem.indexInResponse
         }
 
         override fun areContentsTheSame(oldItem: RedditPost, newItem: RedditPost): Boolean {
-            return oldItem.title == newItem.title
-                    && oldItem.score == newItem.score
-                    && oldItem.commentsCount == newItem.commentsCount
+            return oldItem.indexInResponse == newItem.indexInResponse
         }
     }
 }
