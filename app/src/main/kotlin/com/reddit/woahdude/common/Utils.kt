@@ -20,7 +20,7 @@ val Int.px: Int
 fun RecyclerView.weightChildVisibility(child: View?): Int {
     var percent = getChildVisiblePercent(child)
     if (child != null && percent == 100) {
-        val childCenter = (child.bottom - child.top) / 2
+        val childCenter = child.top + (child.bottom - child.top) / 2
         val center = (bottom - top) / 2
         val distance = Math.abs(center - childCenter)
         val distancePercent = (distance / measuredHeight.toFloat()) * 100
