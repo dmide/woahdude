@@ -51,10 +51,12 @@ fun RedditPost.getImageUrl(): String? {
         if (url.endsWith("giphy.gif")) { // this is not an actual gif but a container
             val imageHash = url.split("/").dropLast(1).last()
             imageUrl = "https://i.giphy.com/$imageHash.gif"
-        } else if (imageExtensions.any { url.endsWith(it) }) {
-            imageUrl = url
         } else if (url.contains("imgur.com") && url.endsWith(".gifv")) {
             imageUrl = url.replace(".gifv", "h.jpg")
+        } else if (url.contains("gfycat.com") && type == "gifv") {
+            imageUrl = url.replace("gfycat.com", "thumbs.gfycat.com") + "-poster.jpg"
+        } else if (imageExtensions.any { url.endsWith(it) }) {
+            imageUrl = url
         }
     }
     return imageUrl
@@ -67,6 +69,8 @@ fun RedditPost.getPostType(): String? {
             postType = "giphy"
         } else if (url?.contains("v.redd.it/") == true) {
             postType = "redditV"
+        } else if (url?.contains("gfycat.com") == true) {
+            postType = "gfycat"
         } else {
             postType = type
         }
@@ -83,6 +87,8 @@ fun RedditPost.getVideoUrl(): String? {
         } else if (url.contains("v.redd.it/")) {
             val videoHash = url.split("/").last()
             videoUrl = "https://v.redd.it/$videoHash/DASHPlaylist.mpd"
+        } else if (url.contains("gfycat.com") && type == "gifv") {
+            videoUrl = url.replace("gfycat.com", "giant.gfycat.com") + ".mp4"
         }
     }
     return videoUrl
