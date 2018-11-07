@@ -42,54 +42,15 @@ fun RedditPost.imageLoadRequest(glide: GlideRequests, imageUrl: String? = getIma
             .override(Const.deviceWidth)
 }
 
-private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
 
-//TODO use API instead of this hackery
 fun RedditPost.getImageUrl(): String? {
-    var imageUrl: String? = null
-    if (url != null) {
-        if (url.endsWith("giphy.gif")) { // this is not an actual gif but a container
-            val imageHash = url.split("/").dropLast(1).last()
-            imageUrl = "https://i.giphy.com/$imageHash.gif"
-        } else if (url.contains("imgur.com") && url.endsWith(".gifv")) {
-            imageUrl = url.replace(".gifv", "h.jpg")
-        } else if (url.contains("gfycat.com") && type == "gifv") {
-            imageUrl = url.replace("gfycat.com", "thumbs.gfycat.com") + "-poster.jpg"
-        } else if (imageExtensions.any { url.endsWith(it) }) {
-            imageUrl = url
-        }
-    }
-    return imageUrl
+    return ExternalResource.of(this).imageUrl()
 }
 
 fun RedditPost.getPostType(): String? {
-    var postType: String? = null
-    if (type != null) {
-        if (url?.endsWith("giphy.gif") == true) {
-            postType = "giphy"
-        } else if (url?.contains("v.redd.it/") == true) {
-            postType = "redditV"
-        } else if (url?.contains("gfycat.com") == true) {
-            postType = "gfycat"
-        } else {
-            postType = type
-        }
-    }
-    return postType
+    return ExternalResource.of(this).typeString()
 }
 
-//TODO use API instead of this hackery
 fun RedditPost.getVideoUrl(): String? {
-    var videoUrl: String? = null
-    if (url != null) {
-        if (url.contains("imgur.com") && url.endsWith(".gifv")) {
-            videoUrl = url.replace(".gifv", ".mp4") //TODO may break eventually, but fine for an example app
-        } else if (url.contains("v.redd.it/")) {
-            val videoHash = url.split("/").last()
-            videoUrl = "https://v.redd.it/$videoHash/DASHPlaylist.mpd"
-        } else if (url.contains("gfycat.com") && type == "gifv") {
-            videoUrl = url.replace("gfycat.com", "giant.gfycat.com") + ".mp4"
-        }
-    }
-    return videoUrl
+    return ExternalResource.of(this).videoUrl()
 }
