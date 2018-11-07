@@ -44,6 +44,7 @@ fun RedditPost.imageLoadRequest(glide: GlideRequests, imageUrl: String? = getIma
 
 private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
 
+//TODO use API instead of this hackery
 fun RedditPost.getImageUrl(): String? {
     var imageUrl: String? = null
     if (url != null) {
@@ -53,7 +54,7 @@ fun RedditPost.getImageUrl(): String? {
         } else if (imageExtensions.any { url.endsWith(it) }) {
             imageUrl = url
         } else if (url.contains("imgur.com") && url.endsWith(".gifv")) {
-            imageUrl = url.replace(".gifv", "h.jpg") //TODO may break eventually, but fine for an example app
+            imageUrl = url.replace(".gifv", "h.jpg")
         }
     }
     return imageUrl
@@ -64,9 +65,25 @@ fun RedditPost.getPostType(): String? {
     if (type != null) {
         if (url?.endsWith("giphy.gif") == true) {
             postType = "giphy"
+        } else if (url?.contains("v.redd.it/") == true) {
+            postType = "redditV"
         } else {
             postType = type
         }
     }
     return postType
+}
+
+//TODO use API instead of this hackery
+fun RedditPost.getVideoUrl(): String? {
+    var videoUrl: String? = null
+    if (url != null) {
+        if (url.contains("imgur.com") && url.endsWith(".gifv")) {
+            videoUrl = url.replace(".gifv", ".mp4") //TODO may break eventually, but fine for an example app
+        } else if (url.contains("v.redd.it/")) {
+            val videoHash = url.split("/").last()
+            videoUrl = "https://v.redd.it/$videoHash/DASHPlaylist.mpd"
+        }
+    }
+    return videoUrl
 }

@@ -12,6 +12,7 @@ import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.extractor.ExtractorsFactory
 import com.google.android.exoplayer2.source.ExtractorMediaSource
+import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DataSource
@@ -20,6 +21,9 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
+
 
 open class VideoPlayerHolder(activity: Activity) {
     private val mainHandler: Handler
@@ -116,10 +120,14 @@ open class VideoPlayerHolder(activity: Activity) {
         currentVideoPath = videoPath
         val uri = Uri.parse(videoPath)
 
-        val videoSource = ExtractorMediaSource(uri,
-                dataSourceFactory,
-                extractorsFactory,
-                mainHandler, null)
+        val videoSource: MediaSource
+        if (videoPath.endsWith(".mpd")) {
+            videoSource = DashMediaSource(uri, dataSourceFactory,
+                    DefaultDashChunkSource.Factory(dataSourceFactory), mainHandler, null)
+        } else {
+            videoSource = ExtractorMediaSource(uri, dataSourceFactory,
+                    extractorsFactory, mainHandler, null)
+        }
 
         // Prepare the player with the source.
         player.seekTo(positionMs)
