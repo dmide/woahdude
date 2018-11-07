@@ -47,11 +47,26 @@ private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
 fun RedditPost.getImageUrl(): String? {
     var imageUrl: String? = null
     if (url != null) {
-        if (imageExtensions.any { url.endsWith(it) }) {
+        if (url.endsWith("giphy.gif")) { // this is not an actual gif but a container
+            val imageHash = url.split("/").dropLast(1).last()
+            imageUrl = "https://i.giphy.com/$imageHash.gif"
+        } else if (imageExtensions.any { url.endsWith(it) }) {
             imageUrl = url
-        } else if (url.endsWith(".gifv")) {
+        } else if (url.contains("imgur.com") && url.endsWith(".gifv")) {
             imageUrl = url.replace(".gifv", "h.jpg") //TODO may break eventually, but fine for an example app
         }
     }
     return imageUrl
+}
+
+fun RedditPost.getPostType(): String? {
+    var postType: String? = null
+    if (type != null) {
+        if (url?.endsWith("giphy.gif") == true) {
+            postType = "giphy"
+        } else {
+            postType = type
+        }
+    }
+    return postType
 }

@@ -13,6 +13,7 @@ import com.reddit.woahdude.common.onFinish
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.RedditPost
 import com.reddit.woahdude.network.getImageUrl
+import com.reddit.woahdude.network.getPostType
 import com.reddit.woahdude.network.imageLoadRequest
 import com.reddit.woahdude.video.VideoPlayerHolder
 import javax.inject.Inject
@@ -42,7 +43,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                 title = redditPost.indexInResponse.toString() + ". " + title
             }
             postTitle.value = title
-            postType.value = redditPost.type
+            postType.value = redditPost.getPostType()
             postComments.value = commentCountString
 
             val imageUrl = redditPost.getImageUrl()
