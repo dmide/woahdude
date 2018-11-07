@@ -13,6 +13,10 @@ sealed class ExternalResource {
                     return Gfycat(url)
                 } else if (url.contains("imgur.com") && url.endsWith(".gifv")) {
                     return ImgurVideo(url)
+                } else if (url.contains("youtube.com") || url.contains("youtu.be")) {
+                    return Youtube(url)
+                } else if (url.contains("vimeo.com")) {
+                    return Vimeo(url)
                 }
             }
             return Default(redditPost.type, redditPost.url)
@@ -45,6 +49,26 @@ sealed class ExternalResource {
 
         override fun typeString(): String? {
             return type
+        }
+    }
+
+    class Vimeo(private val url: String) : ExternalResource() {
+        override fun imageUrl(): String? = null
+
+        override fun videoUrl(): String? = null
+
+        override fun typeString(): String? {
+            return "vimeo"
+        }
+    }
+
+    class Youtube(private val url: String) : ExternalResource() {
+        override fun imageUrl(): String? = null
+
+        override fun videoUrl(): String? = null
+
+        override fun typeString(): String? {
+            return "youtube"
         }
     }
 
