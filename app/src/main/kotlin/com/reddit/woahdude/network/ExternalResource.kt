@@ -27,6 +27,7 @@ sealed class ExternalResource {
 
     class Default(private val type: String?, private val url: String?) : ExternalResource() {
         private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
+        private val videoExtensions = arrayOf(".mp4", ".webm")
 
         override fun imageUrl(): String? {
             if (imageExtensions.any { url?.endsWith(it) == true }) {
@@ -36,6 +37,9 @@ sealed class ExternalResource {
         }
 
         override fun videoUrl(): String? {
+            if (videoExtensions.any { url?.endsWith(it) == true }) {
+                return url
+            }
             return null
         }
 
