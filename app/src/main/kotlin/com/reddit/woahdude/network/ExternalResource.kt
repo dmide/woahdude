@@ -2,24 +2,23 @@ package com.reddit.woahdude.network
 
 //TODO use actual APIs instead of this hackery
 sealed class ExternalResource {
+
     companion object {
         fun of(redditPost: RedditPost): ExternalResource {
-            redditPost.url?.let { url ->
-                if (url.endsWith("giphy.gif")) {
-                    return Giphy(url)
-                } else if (url.contains("v.redd.it")) {
-                    return RedditVideo(url)
-                } else if (url.contains("gfycat.com") && redditPost.type == "gifv") {
-                    return Gfycat(url)
-                } else if (url.contains("imgur.com") && url.endsWith(".gifv")) {
-                    return ImgurVideo(url)
-                } else if (url.contains("youtube.com") || url.contains("youtu.be")) {
-                    return Youtube(url)
-                } else if (url.contains("vimeo.com")) {
-                    return Vimeo(url)
-                }
+            val url = redditPost.url
+            val type = redditPost.type
+            if (url == null) {
+                return Default(type, url)
             }
-            return Default(redditPost.type, redditPost.url)
+            return when {
+                url.endsWith("giphy.gif") -> Giphy(url)
+                url.contains("v.redd.it") -> RedditVideo(url)
+                url.contains("gfycat.com") && type == "gifv" -> Gfycat(url)
+                url.contains("imgur.com") && url.endsWith(".gifv") -> ImgurVideo(url)
+                url.contains("youtube.com") || url.contains("youtu.be") -> Youtube(url)
+                url.contains("vimeo.com") -> Vimeo(url)
+                else -> Default(type, url)
+            }
         }
     }
 
@@ -73,17 +72,11 @@ sealed class ExternalResource {
     }
 
     class ImgurVideo(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? {
-            return url.replace(".gifv", "h.jpg")
-        }
+        override fun imageUrl(): String? = url.replace(".gifv", "h.jpg")
 
-        override fun videoUrl(): String? {
-            return url.replace(".gifv", ".mp4")
-        }
+        override fun videoUrl(): String? = url.replace(".gifv", ".mp4")
 
-        override fun typeString(): String? {
-            return "imgurV"
-        }
+        override fun typeString(): String? = "imgurV"
     }
 
     class Giphy(private val url: String) : ExternalResource() {
@@ -92,28 +85,20 @@ sealed class ExternalResource {
             return "https://i.giphy.com/$imageHash.gif"
         }
 
-        override fun videoUrl(): String? {
-            return null
-        }
+        override fun videoUrl(): String? = null
 
-        override fun typeString(): String? {
-            return "giphy"
-        }
+        override fun typeString(): String? = "giphy"
     }
 
     class RedditVideo(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? {
-            return null // actual API call needed
-        }
+        override fun imageUrl(): String? = null // actual API call needed
 
         override fun videoUrl(): String? {
             val videoHash = url.split("/").last()
             return "https://v.redd.it/$videoHash/DASHPlaylist.mpd"
         }
 
-        override fun typeString(): String? {
-            return "redditV"
-        }
+        override fun typeString(): String? = "redditV"
     }
 
     class Gfycat(private val url: String) : ExternalResource() {
@@ -125,8 +110,6 @@ sealed class ExternalResource {
             return url.replace("gfycat.com", "giant.gfycat.com") + ".mp4"
         }
 
-        override fun typeString(): String? {
-            return "gfycat"
-        }
+        override fun typeString(): String? = "gfycat"
     }
 }
