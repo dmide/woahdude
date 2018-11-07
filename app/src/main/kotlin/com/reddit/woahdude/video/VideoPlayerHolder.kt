@@ -110,12 +110,14 @@ open class VideoPlayerHolder(activity: Activity) {
 
     fun playVideoSource(videoPath: String, positionMs: Long, videoView: TextureView, progress: ProgressBar) {
         this.progress = progress
-        player.setVideoTextureView(videoView)
 
         if (videoPath.equals(currentVideoPath)) {
             resume()
             return
         }
+
+        player.stop()
+        player.setVideoTextureView(videoView)
 
         currentVideoPath = videoPath
         val uri = Uri.parse(videoPath)
