@@ -15,7 +15,7 @@ import com.reddit.woahdude.network.*
 import com.reddit.woahdude.video.VideoPlayerHolder
 import javax.inject.Inject
 
-class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
+class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
     @Inject
     lateinit var resources: Resources
     @Inject

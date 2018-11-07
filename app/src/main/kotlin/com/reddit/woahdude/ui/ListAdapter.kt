@@ -2,6 +2,7 @@ package com.reddit.woahdude.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -21,6 +22,11 @@ class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCal
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         holder.bind(getItem(position))
+    }
+
+    override fun onViewRecycled(holder: PostViewHolder) {
+        holder.binding.progress.isVisible = false
+        super.onViewRecycled(holder)
     }
 
     public override fun getItem(position: Int): RedditPost? {
