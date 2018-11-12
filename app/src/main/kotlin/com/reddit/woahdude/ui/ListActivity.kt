@@ -3,7 +3,6 @@ package com.reddit.woahdude.ui
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -34,7 +33,7 @@ class ListActivity : AppCompatActivity() {
     private lateinit var visibleViewsDisposable: Disposable
     private lateinit var playerHolder: VideoPlayerHolder
     private val listAdapter: ListAdapter = ListAdapter()
-    private var errorSnackbar: Snackbar? = null
+    private var snackbar: Snackbar? = null
     private var isShouldResumePlayback = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,8 +57,8 @@ class ListActivity : AppCompatActivity() {
         binding.setLifecycleOwner(this)
         binding.viewModel = viewModel
 
-        viewModel.errorMessage.observe(this, Observer { errorMessage ->
-            if (errorMessage != null) showError(errorMessage) else hideError()
+        viewModel.refreshMessage.observe(this, Observer { message ->
+            if (message != null) showRefreshSnack(message) else hideRefreshSnack()
         })
         viewModel.posts.observe(this, Observer { posts ->
             listAdapter.submitList(posts)
@@ -85,14 +84,15 @@ class ListActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun showError(@StringRes errorMessage: Int) {
-        errorSnackbar = Snackbar.make(binding.root, errorMessage, Snackbar.LENGTH_INDEFINITE)
-        errorSnackbar?.setAction(R.string.retry) { viewModel.refresh() }
-        errorSnackbar?.show()
+    private fun showRefreshSnack(message: ListViewModel.RefreshMessage) {
+        hideRefreshSnack()
+        snackbar = Snackbar.make(binding.root, message.text, Snackbar.LENGTH_INDEFINITE)
+                .setAction(message.actionText) { viewModel.refresh() }
+                .apply{ show() }
     }
 
-    private fun hideError() {
-        errorSnackbar?.dismiss()
+    private fun hideRefreshSnack() {
+        snackbar?.dismiss()
     }
 
     private fun setupRecyclerViewPreloader(listAdapter: ListAdapter): RecyclerViewPreloader<RedditPost> {
@@ -108,7 +108,7 @@ class ListActivity : AppCompatActivity() {
         }
 
         val sizeProvider = ViewPreloadSizeProvider<RedditPost>()
-        val preloader = RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 30 /*maxPreload*/)
+        val preloader = RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 9 /*maxPreload*/)
         return preloader
     }
 

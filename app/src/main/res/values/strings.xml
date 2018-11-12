@@ -2,6 +2,8 @@
     <string name="app_name">WOAHDUDE</string>
 
     <string name="retry">Retry</string>
+    <string name="refresh">Refresh</string>
     <string name="error_loading">Error while loading posts</string>
+    <string name="new_posts_available">New posts available</string>
     <string name="comments">Comments: %1$d</string>
 </resources>

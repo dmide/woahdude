@@ -1,7 +1,10 @@
 package com.reddit.woahdude.ui
 
+import android.content.SharedPreferences
 import android.util.Log
 import android.view.View
+import androidx.annotation.StringRes
+import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.LivePagedListBuilder
@@ -13,16 +16,21 @@ import com.reddit.woahdude.model.RedditRepository
 import com.reddit.woahdude.network.RedditPost
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+
+const val LAST_REFRESH_TIME = "LAST_REFRESH_TIME"
 
 class ListViewModel : BaseViewModel() {
     @Inject
     lateinit var redditDao: RedditDao
     @Inject
     lateinit var repository: RedditRepository
+    @Inject
+    lateinit var sharedPreferences: SharedPreferences
 
     val loadingVisibility: MutableLiveData<Int> = MutableLiveData()
-    val errorMessage: MutableLiveData<Int> = MutableLiveData()
+    val refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
     val posts: LiveData<PagedList<RedditPost>> by lazy { initializedPagedListLiveData() }
 
     private val compositeDisposable: CompositeDisposable = CompositeDisposable()
@@ -36,14 +44,14 @@ class ListViewModel : BaseViewModel() {
                     when (status) {
                         is RedditRepository.Status.LoadingStarted -> {
                             loadingVisibility.value = View.VISIBLE
-                            errorMessage.value = null
+                            refreshMessage.value = null
                         }
                         is RedditRepository.Status.LoadingFinished -> {
                             loadingVisibility.value = View.GONE
                         }
                         is RedditRepository.Status.LoadingFailed -> {
                             Log.e(javaClass.name, "onRetrievePostListError", status.t)
-                            errorMessage.value = R.string.error_loading
+                            refreshMessage.value = RefreshMessage(R.string.error_loading, R.string.retry)
                         }
                     }
                 }
@@ -79,6 +87,8 @@ class ListViewModel : BaseViewModel() {
             }
             repository.isRequestInProgress = true
             compositeDisposable.add(repository.requestPosts())
+            
+            sharedPreferences.edit { putLong(LAST_REFRESH_TIME, System.currentTimeMillis()) }
         }
 
         override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
@@ -89,5 +99,18 @@ class ListViewModel : BaseViewModel() {
             repository.isRequestInProgress = true
             compositeDisposable.add(repository.requestPosts(after = itemAtEnd.name))
         }
+
+        override fun onItemAtFrontLoaded(itemAtFront: RedditPost) {
+            super.onItemAtFrontLoaded(itemAtFront)
+            val now = System.currentTimeMillis()
+            // sharedPreferences have an in-memory cache internally so it's ok
+            val lastRefreshTime = sharedPreferences.getLong("LAST_REFRESH_TIME", now)
+            if (now - lastRefreshTime > TimeUnit.HOURS.toMillis(4)) {
+                refreshMessage.value = RefreshMessage(R.string.new_posts_available, R.string.refresh)
+                sharedPreferences.edit { putLong(LAST_REFRESH_TIME, System.currentTimeMillis()) }
+            }
+        }
     }
+    
+    data class RefreshMessage(@StringRes val text: Int, @StringRes val actionText: Int)
 }
