@@ -87,7 +87,7 @@ class ListViewModel : BaseViewModel() {
                 return
             }
             repository.isRequestInProgress = true
-            compositeDisposable.add(repository.requestPosts(after = repository.nextPageKey))
+            compositeDisposable.add(repository.requestPosts(after = itemAtEnd.name))
         }
     }
 }

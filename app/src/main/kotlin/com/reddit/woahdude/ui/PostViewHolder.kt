@@ -35,11 +35,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             postComments.value = ""
         } else {
             val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
-            var title = redditPost.title
-            if (BuildConfig.DEBUG) {
-                title = redditPost.indexInResponse.toString() + ". " + title
-            }
-            postTitle.value = title
+            postTitle.value = adapterPosition.toString() + ". " + redditPost.title
             postType.value = redditPost.getPostType()
             postComments.value = commentCountString
 
