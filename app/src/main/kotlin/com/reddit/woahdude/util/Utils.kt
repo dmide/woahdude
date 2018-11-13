@@ -14,6 +14,8 @@ val Int.dp: Int
     get() = (this / Resources.getSystem().displayMetrics.density).toInt()
 val Int.px: Int
     get() = (this * Resources.getSystem().displayMetrics.density).toInt()
+val Int.megabytes: Long
+    get() = this * 1024L * 1024L
 
 /**
  * weights fully visible children based on proximity to parent's center

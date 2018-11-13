@@ -16,10 +16,10 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.util.EventLogger
-import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.upstream.*
+import com.reddit.woahdude.util.megabytes
 
 
 open class VideoPlayerHolder(activity: Activity) {
@@ -38,15 +38,12 @@ open class VideoPlayerHolder(activity: Activity) {
         mainHandler = Handler()
 
         extractorsFactory = DefaultExtractorsFactory()
-        val baseDataSourceFactory = DefaultHttpDataSourceFactory(Util.getUserAgent(activity, "com.reddit.woahdude"),
-                bandwidthMeter,
-                DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
-                DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS,
-                true)
-        dataSourceFactory = DefaultDataSourceFactory(activity, bandwidthMeter, baseDataSourceFactory)
+        dataSourceFactory = CacheDataSourceFactory(activity, 150.megabytes, 40.megabytes)
         val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
         val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
-        val loadControl = DefaultLoadControl()
+
+        val defaultAllocator = DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
+        val loadControl = ExtendedPlaybackLoadControl(defaultAllocator)
 
         player = ExoPlayerFactory.newSimpleInstance(activity, trackSelector, loadControl)
         player.addListener(VideoEventListener())
@@ -72,7 +69,9 @@ open class VideoPlayerHolder(activity: Activity) {
                         player.playWhenReady = true
                         progress?.isVisible = true
                     }
-                    Player.STATE_BUFFERING -> progress?.isVisible = true
+                    Player.STATE_BUFFERING -> {
+                        progress?.isVisible = true
+                    }
                 }
             }
 
@@ -101,6 +100,7 @@ open class VideoPlayerHolder(activity: Activity) {
 
     fun pause() {
         player.playWhenReady = false
+        progress?.isVisible = false
     }
 
     fun resume() {
@@ -138,3 +138,11 @@ open class VideoPlayerHolder(activity: Activity) {
         player.playWhenReady = true
     }
 }
+
+class ExtendedPlaybackLoadControl(defaultAllocator: DefaultAllocator) : DefaultLoadControl(defaultAllocator,
+        DEFAULT_MIN_BUFFER_MS,
+        DEFAULT_MAX_BUFFER_MS,
+        DEFAULT_BUFFER_FOR_PLAYBACK_MS * 2,
+        DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS * 2,
+        DEFAULT_TARGET_BUFFER_BYTES,
+        DEFAULT_PRIORITIZE_TIME_OVER_SIZE_THRESHOLDS)
