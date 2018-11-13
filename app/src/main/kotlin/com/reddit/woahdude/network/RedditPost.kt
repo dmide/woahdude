@@ -10,7 +10,7 @@ import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
-import com.reddit.woahdude.common.Const
+import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.common.GlideRequest
 import com.reddit.woahdude.common.GlideRequests
 

@@ -6,9 +6,9 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.reddit.woahdude.R
-import com.reddit.woahdude.common.Const
+import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.common.GlideApp
-import com.reddit.woahdude.common.onFinish
+import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.*
 import com.reddit.woahdude.video.VideoPlayerHolder

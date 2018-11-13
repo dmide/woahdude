@@ -20,6 +20,8 @@ import com.reddit.woahdude.common.*
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.network.RedditPost
 import com.reddit.woahdude.network.imageLoadRequest
+import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.util.weightChildVisibility
 import com.reddit.woahdude.video.VideoPlayerHolder
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable

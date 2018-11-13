@@ -2,7 +2,7 @@ package com.reddit.woahdude.network
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import com.reddit.woahdude.common.WrappedDrawable
+import com.reddit.woahdude.ui.components.WrappedDrawable
 
 //TODO use actual APIs instead of this hackery
 sealed class ExternalResource {

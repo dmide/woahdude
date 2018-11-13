@@ -1,4 +1,4 @@
-package com.reddit.woahdude.common
+package com.reddit.woahdude.ui.components
 
 import android.graphics.Canvas
 import android.graphics.ColorFilter
