@@ -36,7 +36,8 @@ data class RedditPost(
         val thumbnail: String?,
         @SerializedName("link_flair_text")
         val type: String?,
-        val url: String?) {
+        val url: String?,
+        val permalink: String?) {
     // to be consistent w/ changing backend order, we need to keep a data like this
     var indexInResponse: Int = -1
 }

@@ -52,22 +52,27 @@
                 android:id="@+id/comments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_launch"
+                android:background="?android:attr/selectableItemBackground"
+                android:drawablePadding="12dp"
                 android:gravity="center"
+                android:onClick="@{(view) -> viewHolder.onCommentsClick()}"
                 android:padding="16dp"
                 android:text="@{viewHolder.postComments}"
+                android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 tools:text="comments" />
 
             <ImageView
                 android:id="@+id/placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:src="@drawable/list_placeholder"
                 app:layout_constraintBottom_toTopOf="@+id/comments"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                app:layout_constraintTop_toBottomOf="@+id/title" />
 
             <ImageView
                 android:id="@+id/imageView"

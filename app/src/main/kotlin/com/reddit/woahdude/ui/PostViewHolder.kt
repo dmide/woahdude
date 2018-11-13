@@ -1,18 +1,22 @@
 package com.reddit.woahdude.ui
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
+import android.net.Uri
 import androidx.core.view.isVisible
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.reddit.woahdude.R
-import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.common.GlideApp
-import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.*
+import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.video.VideoPlayerHolder
 import javax.inject.Inject
+
 
 class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
     @Inject
@@ -64,6 +68,13 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
                 }
                 playerHolder.playVideoSource(videoUrl, 0, binding.videoView, binding.progress)
             }
+        }
+    }
+
+    fun onCommentsClick() {
+        redditPost?.let {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://reddit.com" + it.permalink))
+            (binding.root.context as Activity).startActivity(browserIntent)
         }
     }
 }
