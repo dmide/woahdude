@@ -36,7 +36,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             postTitle.value = ""
             postType.value = ""
             postComments.value = ""
-            binding.youtubeLink.isVisible = false
+            binding.externalLinkButton.isVisible = false
         } else {
             val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
             postTitle.value = adapterPosition.toString() + ". " + redditPost.title
@@ -50,7 +50,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
                     .onFinish { binding.progress.isVisible = false }
                     .into(binding.imageView)
-            binding.youtubeLink.isVisible = ExternalResource.of(redditPost) is ExternalResource.Youtube
+            binding.externalLinkButton.isVisible = redditPost.getVideoUrl() == null && redditPost.getImageResource() == null
         }
 
         binding.viewHolder = this

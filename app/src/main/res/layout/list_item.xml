@@ -86,15 +86,14 @@
                 tools:srcCompat="@tools:sample/avatars" />
 
             <Button
-                android:id="@+id/youtubeLink"
+                android:id="@+id/externalLinkButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:backgroundTint="@color/youtube_brand"
                 android:onClick="@{(view) -> viewHolder.onUrlClick()}"
-                android:text="@string/watch_on_youtube"
+                android:text="@string/view_in_app"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toTopOf="@id/comments"
                 app:layout_constraintEnd_toEndOf="parent"

@@ -6,5 +6,5 @@
     <string name="error_loading">Error while loading posts</string>
     <string name="new_posts_available">New posts available</string>
     <string name="comments">Comments: %1$d</string>
-    <string name="watch_on_youtube">Watch on Youtube</string>
+    <string name="view_in_app">View in app/browser</string>
 </resources>
