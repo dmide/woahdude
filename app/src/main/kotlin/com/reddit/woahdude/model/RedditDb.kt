@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.reddit.woahdude.network.CrossPost
 import com.reddit.woahdude.network.RedditPost
 
 @Database(
@@ -11,6 +13,7 @@ import com.reddit.woahdude.network.RedditPost
         version = 1,
         exportSchema = false
 )
+@TypeConverters(CrossPost::class)
 abstract class RedditDb : RoomDatabase() {
 
     companion object {

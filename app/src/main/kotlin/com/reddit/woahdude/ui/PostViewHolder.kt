@@ -5,7 +5,6 @@ import android.content.res.Resources
 import androidx.core.view.isVisible
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
-import com.reddit.woahdude.BuildConfig
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.Const
 import com.reddit.woahdude.common.GlideApp
@@ -39,11 +38,11 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             postType.value = redditPost.getPostType()
             postComments.value = commentCountString
 
-            val imageUrl = redditPost.getImageUrl()
-            binding.imageView.isVisible = imageUrl != null
+            val imageResource = redditPost.getImageResource()
+            binding.imageView.isVisible = imageResource != null
             binding.videoViewContainer.isVisible = false
             binding.progress.isVisible = true
-            redditPost.imageLoadRequest(GlideApp.with(context), imageUrl)
+            redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
                     .onFinish { binding.progress.isVisible = false }
                     .into(binding.imageView)
         }
@@ -56,6 +55,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             val videoUrl = post.getVideoUrl() ?: return
 
             playerHolder?.let {
+                binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
                 binding.videoViewContainer.isVisible = true
                 playerHolder.videoSizeChangeListener { w, h ->
                     val widthModifier = Const.deviceWidth / w.toFloat()

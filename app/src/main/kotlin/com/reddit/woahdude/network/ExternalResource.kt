@@ -1,5 +1,9 @@
 package com.reddit.woahdude.network
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import com.reddit.woahdude.common.WrappedDrawable
+
 //TODO use actual APIs instead of this hackery
 sealed class ExternalResource {
 
@@ -12,7 +16,7 @@ sealed class ExternalResource {
             }
             return when {
                 url.endsWith("giphy.gif") -> Giphy(url)
-                url.contains("v.redd.it") -> RedditVideo(url)
+                url.contains("v.redd.it") -> RedditVideo(url, redditPost.media ?: redditPost.crosspostParents?.get(0)?.media)
                 url.contains("gfycat.com") && type == "gifv" -> Gfycat(url)
                 url.contains("imgur.com") && url.endsWith(".gifv") -> ImgurVideo(url)
                 url.contains("youtube.com") || url.contains("youtu.be") -> Youtube(url)
@@ -22,7 +26,7 @@ sealed class ExternalResource {
         }
     }
 
-    abstract fun imageUrl(): String?
+    abstract fun imageResource(): Any?
 
     abstract fun videoUrl(): String?
 
@@ -32,7 +36,7 @@ sealed class ExternalResource {
         private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
         private val videoExtensions = arrayOf(".mp4", ".webm")
 
-        override fun imageUrl(): String? {
+        override fun imageResource(): String? {
             if (imageExtensions.any { url?.endsWith(it) == true }) {
                 return url
             }
@@ -52,7 +56,7 @@ sealed class ExternalResource {
     }
 
     class Vimeo(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? = null
+        override fun imageResource(): String? = null
 
         override fun videoUrl(): String? = null
 
@@ -62,7 +66,7 @@ sealed class ExternalResource {
     }
 
     class Youtube(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? = null
+        override fun imageResource(): String? = null
 
         override fun videoUrl(): String? = null
 
@@ -72,7 +76,7 @@ sealed class ExternalResource {
     }
 
     class ImgurVideo(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? = url.replace(".gifv", "h.jpg")
+        override fun imageResource(): String? = url.replace(".gifv", "h.jpg")
 
         override fun videoUrl(): String? = url.replace(".gifv", ".mp4")
 
@@ -80,7 +84,7 @@ sealed class ExternalResource {
     }
 
     class Giphy(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? {
+        override fun imageResource(): String? {
             val imageHash = url.split("/").dropLast(1).last()
             return "https://i.giphy.com/$imageHash.gif"
         }
@@ -90,8 +94,17 @@ sealed class ExternalResource {
         override fun typeString(): String? = "giphy"
     }
 
-    class RedditVideo(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? = null // actual API call needed
+    class RedditVideo(private val url: String, private val media: Media?) : ExternalResource() {
+        override fun imageResource(): Any? {
+            val height = media?.reddit_video?.height
+            val width = media?.reddit_video?.width
+            if (height != null && width != null) {
+                val drawable = WrappedDrawable(ColorDrawable(Color.TRANSPARENT))
+                drawable.setBounds(0, 0, width, height)
+                return drawable
+            }
+            return null
+        }
 
         override fun videoUrl(): String? {
             val videoHash = url.split("/").last()
@@ -102,7 +115,7 @@ sealed class ExternalResource {
     }
 
     class Gfycat(private val url: String) : ExternalResource() {
-        override fun imageUrl(): String? {
+        override fun imageResource(): String? {
             return url.replace("gfycat.com", "thumbs.gfycat.com") + "-poster.jpg"
         }
 
