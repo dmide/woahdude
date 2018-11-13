@@ -36,12 +36,13 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             postTitle.value = ""
             postType.value = ""
             postComments.value = ""
+            binding.youtubeLink.isVisible = false
         } else {
             val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
             postTitle.value = adapterPosition.toString() + ". " + redditPost.title
             postType.value = redditPost.getPostType()
             postComments.value = commentCountString
-
+            
             val imageResource = redditPost.getImageResource()
             binding.imageView.isVisible = imageResource != null
             binding.videoViewContainer.isVisible = false
@@ -49,6 +50,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
                     .onFinish { binding.progress.isVisible = false }
                     .into(binding.imageView)
+            binding.youtubeLink.isVisible = ExternalResource.of(redditPost) is ExternalResource.Youtube
         }
 
         binding.viewHolder = this
@@ -74,6 +76,13 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     fun onCommentsClick() {
         redditPost?.let {
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://reddit.com" + it.permalink))
+            (binding.root.context as Activity).startActivity(browserIntent)
+        }
+    }
+
+    fun onUrlClick() {
+        redditPost?.let {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
             (binding.root.context as Activity).startActivity(browserIntent)
         }
     }

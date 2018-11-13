@@ -52,8 +52,8 @@
                 android:id="@+id/comments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/ic_launch"
                 android:background="?android:attr/selectableItemBackground"
+                android:drawableLeft="@drawable/ic_launch"
                 android:drawablePadding="12dp"
                 android:gravity="center"
                 android:onClick="@{(view) -> viewHolder.onCommentsClick()}"
@@ -84,6 +84,22 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/title"
                 tools:srcCompat="@tools:sample/avatars" />
+
+            <Button
+                android:id="@+id/youtubeLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:backgroundTint="@color/youtube_brand"
+                android:onClick="@{(view) -> viewHolder.onUrlClick()}"
+                android:text="@string/watch_on_youtube"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@id/comments"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <com.google.android.exoplayer2.ui.AspectRatioFrameLayout
                 android:id="@+id/videoViewContainer"
