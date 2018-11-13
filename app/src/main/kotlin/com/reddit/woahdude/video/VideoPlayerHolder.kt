@@ -15,14 +15,11 @@ import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
-import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
+import com.google.android.exoplayer2.upstream.*
 
 
 open class VideoPlayerHolder(activity: Activity) {
@@ -41,7 +38,11 @@ open class VideoPlayerHolder(activity: Activity) {
         mainHandler = Handler()
 
         extractorsFactory = DefaultExtractorsFactory()
-        val baseDataSourceFactory = DefaultHttpDataSourceFactory(Util.getUserAgent(activity, "com.reddit.woahdude"), bandwidthMeter)
+        val baseDataSourceFactory = DefaultHttpDataSourceFactory(Util.getUserAgent(activity, "com.reddit.woahdude"),
+                bandwidthMeter,
+                DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
+                DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS,
+                true)
         dataSourceFactory = DefaultDataSourceFactory(activity, bandwidthMeter, baseDataSourceFactory)
         val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
         val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
