@@ -19,13 +19,13 @@ class WrappedDrawable(protected val drawable: Drawable) : Drawable() {
         drawable.colorFilter = colorFilter
     }
 
-    override fun getOpacity(): Int = drawable.opacity
-
     override fun draw(canvas: Canvas) {
         drawable.draw(canvas)
     }
 
+    override fun getOpacity() = drawable.opacity
+
     override fun getIntrinsicWidth() = drawable.bounds.width()
 
-    override fun getIntrinsicHeight(): Int = drawable.bounds.height()
+    override fun getIntrinsicHeight() = drawable.bounds.height()
 }
