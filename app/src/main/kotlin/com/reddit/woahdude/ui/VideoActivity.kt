@@ -41,6 +41,8 @@ class VideoActivity : AppCompatActivity() {
                 binding.videoViewContainer.setAspectRatio(width.toFloat() / height.toFloat())
             }
         }
-        playerHolder?.playVideoSource("https://i.imgur.com/OBeI8Dy.mp4", 0, binding.videoView, binding.progress)
+        playerHolder?.prepareVideoSource("https://i.imgur.com/OBeI8Dy.mp4")
+        playerHolder?.bind(binding.videoView, binding.progress)
+        playerHolder?.resume()
     }
 }

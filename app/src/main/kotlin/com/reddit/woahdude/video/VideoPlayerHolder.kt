@@ -20,6 +20,7 @@ import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.upstream.*
 import com.reddit.woahdude.util.megabytes
+import java.lang.IllegalStateException
 
 
 open class VideoPlayerHolder(activity: Activity) {
@@ -104,25 +105,36 @@ open class VideoPlayerHolder(activity: Activity) {
     }
 
     fun resume() {
+        if (progress == null) {
+            throw IllegalStateException("bind() must be called before resume")
+        }
         player.playWhenReady = true
     }
 
     fun isPlaying() = player.playWhenReady
-
-    fun playVideoSource(videoPath: String, positionMs: Long, videoView: TextureView, progress: ProgressBar) {
+    
+    /*
+        bind() should be called after prepareVideoSource() to prevent
+        previous videoSource rogue frames from appearing
+     */
+    fun bind(videoView: TextureView, progress: ProgressBar) {
         this.progress = progress
+        player.setVideoTextureView(videoView)
+    }
 
+    fun prepareVideoSource(videoPath: String) {        
         if (videoPath.equals(currentVideoPath)) {
-            resume()
             return
         }
-
+        
         player.stop()
-        player.setVideoTextureView(videoView)
-
         currentVideoPath = videoPath
-        val uri = Uri.parse(videoPath)
+        player.seekTo(0)
+        player.prepare(createMediaSource(videoPath))
+    }
 
+    private fun createMediaSource(videoPath: String): MediaSource {
+        val uri = Uri.parse(videoPath)
         val videoSource: MediaSource
         if (videoPath.endsWith(".mpd")) {
             videoSource = DashMediaSource(uri, dataSourceFactory,
@@ -131,11 +143,7 @@ open class VideoPlayerHolder(activity: Activity) {
             videoSource = ExtractorMediaSource(uri, dataSourceFactory,
                     extractorsFactory, mainHandler, null)
         }
-
-        // Prepare the player with the source.
-        player.seekTo(positionMs)
-        player.prepare(videoSource)
-        player.playWhenReady = true
+        return videoSource
     }
 }
 

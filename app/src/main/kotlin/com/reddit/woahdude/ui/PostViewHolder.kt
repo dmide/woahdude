@@ -68,7 +68,9 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
                     binding.videoViewContainer.layoutParams.height = (h * widthModifier).toInt()
                     binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
                 }
-                playerHolder.playVideoSource(videoUrl, 0, binding.videoView, binding.progress)
+                playerHolder.prepareVideoSource(videoUrl)
+                playerHolder.bind(binding.videoView, binding.progress)
+                playerHolder.resume()
             }
         }
     }
