@@ -127,7 +127,8 @@ class ListActivity : AppCompatActivity() {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { mostVisibleChild ->
-                            playerHolder?.pause()
+                            playerHolder.pause()
+                            playerHolder.unbind()
                             val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
                             (holder as PostViewHolder).showVideoIfNeeded(playerHolder)
                         },

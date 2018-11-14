@@ -121,6 +121,12 @@ open class VideoPlayerHolder(activity: Activity) {
         this.progress = progress
         player.setVideoTextureView(videoView)
     }
+    
+    fun unbind() {
+        progress?.isVisible = false
+        progress = null
+        player.setVideoTextureView(null)
+    }
 
     fun prepareVideoSource(videoPath: String) {        
         if (videoPath.equals(currentVideoPath)) {
