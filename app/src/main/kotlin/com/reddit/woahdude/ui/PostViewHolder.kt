@@ -15,6 +15,7 @@ import com.reddit.woahdude.network.*
 import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.video.VideoPlayerHolder
+import com.reddit.woahdude.video.VideoPlayerHoldersPool
 import javax.inject.Inject
 
 
@@ -23,11 +24,14 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     lateinit var resources: Resources
     @Inject
     lateinit var context: Context
+    @Inject
+    lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
     val postTitle = MutableLiveData<String>()
     val postType = MutableLiveData<String>()
     val postComments = MutableLiveData<String>()
     var redditPost: RedditPost? = null
+    var videoPlayerHolder: VideoPlayerHolder? = null
 
     fun bind(redditPost: RedditPost?) {
         this.redditPost = redditPost
@@ -42,7 +46,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             postTitle.value = adapterPosition.toString() + ". " + redditPost.title
             postType.value = redditPost.getPostType()
             postComments.value = commentCountString
-            
+
             val imageResource = redditPost.getImageResource()
             binding.imageView.isVisible = imageResource != null
             binding.videoViewContainer.isVisible = false
@@ -51,27 +55,40 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
                     .onFinish { binding.progress.isVisible = false }
                     .into(binding.imageView)
             binding.externalLinkButton.isVisible = redditPost.getVideoUrl() == null && redditPost.getImageResource() == null
+
+            redditPost.getVideoUrl()?.let { videoUrl ->
+                videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
+                    prepareVideoSource(videoUrl)
+                    bind(binding.videoView, binding.progress)
+                }
+            }
         }
 
         binding.viewHolder = this
     }
 
-    fun showVideoIfNeeded(playerHolder: VideoPlayerHolder?) {
-        redditPost?.let { post ->
-            val videoUrl = post.getVideoUrl() ?: return
+    fun releaseVideoPlayerHolder() {
+        videoPlayerHolder?.let {
+            it.pause()
+            it.unbind()
+            playerHoldersPool.putBack(it)
+        }
+        videoPlayerHolder = null
+    }
 
-            playerHolder?.let {
-                binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
-                binding.videoViewContainer.isVisible = true
-                playerHolder.videoSizeChangeListener { w, h ->
-                    val widthModifier = Const.deviceWidth / w.toFloat()
-                    binding.videoViewContainer.layoutParams.height = (h * widthModifier).toInt()
-                    binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
-                }
-                playerHolder.prepareVideoSource(videoUrl)
-                playerHolder.bind(binding.videoView, binding.progress)
-                playerHolder.resume()
+    fun showVideoIfNeeded() {
+        if (redditPost?.getVideoUrl() == null) {
+            return
+        }
+        videoPlayerHolder?.let {
+            binding.videoViewContainer.isVisible = true
+            binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
+            it.videoSizeChangeListener { w, h ->
+                val widthModifier = Const.deviceWidth / w.toFloat()
+                binding.videoViewContainer.layoutParams.height = (h * widthModifier).toInt()
+                binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
             }
+            it.resume()
         }
     }
 

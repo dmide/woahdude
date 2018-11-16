@@ -6,6 +6,8 @@ import androidx.databinding.DataBindingUtil
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.reddit.woahdude.R
 import com.reddit.woahdude.databinding.ActivityVideoBinding
+import com.reddit.woahdude.util.megabytes
+import com.reddit.woahdude.video.CacheDataSourceFactory
 import com.reddit.woahdude.video.VideoPlayerHolder
 
 class VideoActivity : AppCompatActivity() {
@@ -35,7 +37,8 @@ class VideoActivity : AppCompatActivity() {
             return
         }
 
-        playerHolder = object : VideoPlayerHolder(this@VideoActivity) {
+        val dataSourceFactory = CacheDataSourceFactory(this, 100.megabytes, 20.megabytes)
+        playerHolder = object : VideoPlayerHolder(this@VideoActivity, dataSourceFactory) {
             override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
                 super.onVideoSizeChanged(width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
                 binding.videoViewContainer.setAspectRatio(width.toFloat() / height.toFloat())

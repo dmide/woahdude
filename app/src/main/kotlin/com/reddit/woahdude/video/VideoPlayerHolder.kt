@@ -1,6 +1,6 @@
 package com.reddit.woahdude.video
 
-import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.util.Log
@@ -13,40 +13,40 @@ import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.extractor.ExtractorsFactory
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.upstream.DataSource
+import com.google.android.exoplayer2.upstream.DefaultAllocator
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.util.EventLogger
-import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
-import com.google.android.exoplayer2.source.dash.DashMediaSource
-import com.google.android.exoplayer2.upstream.*
-import com.reddit.woahdude.util.megabytes
-import java.lang.IllegalStateException
+import javax.inject.Inject
 
-
-open class VideoPlayerHolder(activity: Activity) {
+open class VideoPlayerHolder @Inject constructor(val context: Context,
+                                            val dataSourceFactory: DataSource.Factory) {
     private val mainHandler: Handler
     private val extractorsFactory: ExtractorsFactory
-    private val dataSourceFactory: DataSource.Factory
     private val player: SimpleExoPlayer
-
     private var playerListener: ExoPlayer.EventListener? = null
+
     private var progress: ProgressBar? = null
     private var currentVideoPath: String? = null
     private var videoSizeChangeListener: ((width: Int, height: Int) -> Unit)? = null
+    private var pendingSize: Pair<Int, Int>? = null
 
     init {
         val bandwidthMeter = DefaultBandwidthMeter()
         mainHandler = Handler()
 
         extractorsFactory = DefaultExtractorsFactory()
-        dataSourceFactory = CacheDataSourceFactory(activity, 150.megabytes, 40.megabytes)
         val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
         val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
 
         val defaultAllocator = DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
         val loadControl = ExtendedPlaybackLoadControl(defaultAllocator)
 
-        player = ExoPlayerFactory.newSimpleInstance(activity, trackSelector, loadControl)
+        player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl)
         player.addListener(VideoEventListener())
         player.addAnalyticsListener(object : EventLogger(null) {
             override fun onVideoSizeChanged(eventTime: AnalyticsListener.EventTime, width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
@@ -67,7 +67,6 @@ open class VideoPlayerHolder(activity: Activity) {
                         if (playWhenReady) progress?.isVisible = false
                     }
                     Player.STATE_IDLE -> {
-                        player.playWhenReady = true
                         progress?.isVisible = true
                     }
                     Player.STATE_BUFFERING -> {
@@ -84,11 +83,18 @@ open class VideoPlayerHolder(activity: Activity) {
     }
 
     open fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
+        if (videoSizeChangeListener == null) {
+            pendingSize = Pair(width, height)
+        }
         videoSizeChangeListener?.invoke(width, height)
     }
 
     fun videoSizeChangeListener(listener: (width: Int, height: Int) -> Unit) {
         videoSizeChangeListener = listener
+        pendingSize?.let {
+            videoSizeChangeListener?.invoke(it.first, it.second)
+            pendingSize = null
+        }
     }
 
     fun release() {
@@ -112,7 +118,7 @@ open class VideoPlayerHolder(activity: Activity) {
     }
 
     fun isPlaying() = player.playWhenReady
-    
+
     /*
         bind() should be called after prepareVideoSource() to prevent
         previous videoSource rogue frames from appearing
@@ -121,18 +127,20 @@ open class VideoPlayerHolder(activity: Activity) {
         this.progress = progress
         player.setVideoTextureView(videoView)
     }
-    
+
     fun unbind() {
+        player.seekTo(0)
         progress?.isVisible = false
         progress = null
+        videoSizeChangeListener = null
         player.setVideoTextureView(null)
     }
 
-    fun prepareVideoSource(videoPath: String) {        
+    fun prepareVideoSource(videoPath: String) {
         if (videoPath.equals(currentVideoPath)) {
             return
         }
-        
+
         player.stop()
         currentVideoPath = videoPath
         player.seekTo(0)
