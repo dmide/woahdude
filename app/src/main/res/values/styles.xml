@@ -9,6 +9,7 @@
 
         <item name="android:windowBackground">@drawable/activity_background</item>
         <item name="android:colorBackground">@color/bg_activity</item>
+        <item name="colorButtonNormal">@color/bg_button</item>
     </style>
 
 </resources>

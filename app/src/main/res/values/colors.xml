@@ -6,4 +6,5 @@
     <color name="black">#ff000000</color>
     <color name="bg_activity">#0d0c1b</color>
     <color name="bg_card">#1b1a31</color>
+    <color name="bg_button">#373567</color>
 </resources>
