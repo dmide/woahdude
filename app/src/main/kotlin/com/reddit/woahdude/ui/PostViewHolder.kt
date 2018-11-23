@@ -60,6 +60,14 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
                 videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
                     prepareVideoSource(videoUrl)
                     bind(binding.videoView, binding.progress)
+
+                    binding.videoViewContainer.isVisible = true
+                    binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
+                    videoSizeChangeListener { w, h ->
+                        val widthModifier = Const.deviceWidth / w.toFloat()
+                        binding.videoViewContainer.layoutParams.height = (h * widthModifier).toInt()
+                        binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
+                    }
                 }
             }
         }
@@ -80,16 +88,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
         if (redditPost?.getVideoUrl() == null) {
             return
         }
-        videoPlayerHolder?.let {
-            binding.videoViewContainer.isVisible = true
-            binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
-            it.videoSizeChangeListener { w, h ->
-                val widthModifier = Const.deviceWidth / w.toFloat()
-                binding.videoViewContainer.layoutParams.height = (h * widthModifier).toInt()
-                binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
-            }
-            it.resume()
-        }
+        videoPlayerHolder?.resume()
     }
 
     fun onCommentsClick() {
