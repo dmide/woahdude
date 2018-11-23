@@ -16,15 +16,15 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.*
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultAllocator
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.util.EventLogger
 import javax.inject.Inject
 
 open class VideoPlayerHolder @Inject constructor(val context: Context,
-                                            val dataSourceFactory: DataSource.Factory) {
+                                                 val dataSourceFactory: DataSource.Factory) {
     private val mainHandler: Handler
     private val extractorsFactory: ExtractorsFactory
     private val player: SimpleExoPlayer
@@ -36,11 +36,15 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     private var pendingSize: Pair<Int, Int>? = null
 
     init {
-        val bandwidthMeter = DefaultBandwidthMeter()
         mainHandler = Handler()
 
         extractorsFactory = DefaultExtractorsFactory()
-        val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
+        val bandwidthFraction = 3f; // prefer better quality even on not-so-good connections
+        val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(
+                0,
+                DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS,
+                DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS,
+                bandwidthFraction)
         val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
 
         val defaultAllocator = DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
