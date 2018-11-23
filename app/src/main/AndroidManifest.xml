@@ -13,7 +13,8 @@
         android:theme="@style/AppTheme"
         tools:replace="android:allowBackup">
 
-        <activity android:name=".ui.ListActivity"/>
+        <activity android:name=".ui.ListActivity"
+            android:theme="@style/AppTheme" />
         <activity android:name=".ui.VideoActivity"/>
 
         <!-- To make launcher icon stay on the home screen -->

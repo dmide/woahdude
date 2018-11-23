@@ -8,6 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
 
         <item name="android:windowBackground">@drawable/activity_background</item>
+        <item name="android:colorBackground">@color/bg_activity</item>
     </style>
 
 </resources>
