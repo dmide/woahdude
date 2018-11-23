@@ -1,4 +1,4 @@
-package com.reddit.woahdude.common
+package com.reddit.woahdude.util
 
 import android.app.Activity
 import android.content.Context

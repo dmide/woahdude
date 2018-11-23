@@ -1,4 +1,4 @@
-package com.reddit.woahdude.common
+package com.reddit.woahdude.util
 
 import android.content.res.Resources
 import android.graphics.Rect
@@ -8,11 +8,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.reddit.woahdude.common.GlideRequest
 
 val Int.dp: Int
     get() = (this / Resources.getSystem().displayMetrics.density).toInt()
 val Int.px: Int
     get() = (this * Resources.getSystem().displayMetrics.density).toInt()
+val Int.megabytes: Long
+    get() = this * 1024L * 1024L
 
 /**
  * weights fully visible children based on proximity to parent's center

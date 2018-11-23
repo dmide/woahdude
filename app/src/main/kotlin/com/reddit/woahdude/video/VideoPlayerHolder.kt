@@ -1,6 +1,6 @@
 package com.reddit.woahdude.video
 
-import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.util.Log
@@ -13,41 +13,40 @@ import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.extractor.ExtractorsFactory
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DataSource
+import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.EventLogger
-import com.google.android.exoplayer2.util.Util
-import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
-import com.google.android.exoplayer2.source.dash.DashMediaSource
+import javax.inject.Inject
 
-
-open class VideoPlayerHolder(activity: Activity) {
+open class VideoPlayerHolder @Inject constructor(val context: Context,
+                                            val dataSourceFactory: DataSource.Factory) {
     private val mainHandler: Handler
     private val extractorsFactory: ExtractorsFactory
-    private val dataSourceFactory: DataSource.Factory
     private val player: SimpleExoPlayer
-
     private var playerListener: ExoPlayer.EventListener? = null
+
     private var progress: ProgressBar? = null
     private var currentVideoPath: String? = null
     private var videoSizeChangeListener: ((width: Int, height: Int) -> Unit)? = null
+    private var pendingSize: Pair<Int, Int>? = null
 
     init {
         val bandwidthMeter = DefaultBandwidthMeter()
         mainHandler = Handler()
 
         extractorsFactory = DefaultExtractorsFactory()
-        val baseDataSourceFactory = DefaultHttpDataSourceFactory(Util.getUserAgent(activity, "com.reddit.woahdude"), bandwidthMeter)
-        dataSourceFactory = DefaultDataSourceFactory(activity, bandwidthMeter, baseDataSourceFactory)
         val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
         val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
-        val loadControl = DefaultLoadControl()
 
-        player = ExoPlayerFactory.newSimpleInstance(activity, trackSelector, loadControl)
+        val defaultAllocator = DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
+        val loadControl = ExtendedPlaybackLoadControl(defaultAllocator)
+
+        player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl)
         player.addListener(VideoEventListener())
         player.addAnalyticsListener(object : EventLogger(null) {
             override fun onVideoSizeChanged(eventTime: AnalyticsListener.EventTime, width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
@@ -68,10 +67,11 @@ open class VideoPlayerHolder(activity: Activity) {
                         if (playWhenReady) progress?.isVisible = false
                     }
                     Player.STATE_IDLE -> {
-                        player.playWhenReady = true
                         progress?.isVisible = true
                     }
-                    Player.STATE_BUFFERING -> progress?.isVisible = true
+                    Player.STATE_BUFFERING -> {
+                        progress?.isVisible = true
+                    }
                 }
             }
 
@@ -83,11 +83,18 @@ open class VideoPlayerHolder(activity: Activity) {
     }
 
     open fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
+        if (videoSizeChangeListener == null) {
+            pendingSize = Pair(width, height)
+        }
         videoSizeChangeListener?.invoke(width, height)
     }
 
     fun videoSizeChangeListener(listener: (width: Int, height: Int) -> Unit) {
         videoSizeChangeListener = listener
+        pendingSize?.let {
+            videoSizeChangeListener?.invoke(it.first, it.second)
+            pendingSize = null
+        }
     }
 
     fun release() {
@@ -100,28 +107,48 @@ open class VideoPlayerHolder(activity: Activity) {
 
     fun pause() {
         player.playWhenReady = false
+        progress?.isVisible = false
     }
 
     fun resume() {
+        if (progress == null) {
+            throw IllegalStateException("bind() must be called before resume")
+        }
         player.playWhenReady = true
     }
 
     fun isPlaying() = player.playWhenReady
 
-    fun playVideoSource(videoPath: String, positionMs: Long, videoView: TextureView, progress: ProgressBar) {
+    /*
+        bind() should be called after prepareVideoSource() to prevent
+        previous videoSource rogue frames from appearing
+     */
+    fun bind(videoView: TextureView, progress: ProgressBar) {
         this.progress = progress
+        player.setVideoTextureView(videoView)
+    }
 
+    fun unbind() {
+        player.seekTo(0)
+        progress?.isVisible = false
+        progress = null
+        videoSizeChangeListener = null
+        player.setVideoTextureView(null)
+    }
+
+    fun prepareVideoSource(videoPath: String) {
         if (videoPath.equals(currentVideoPath)) {
-            resume()
             return
         }
 
         player.stop()
-        player.setVideoTextureView(videoView)
-
         currentVideoPath = videoPath
-        val uri = Uri.parse(videoPath)
+        player.seekTo(0)
+        player.prepare(createMediaSource(videoPath))
+    }
 
+    private fun createMediaSource(videoPath: String): MediaSource {
+        val uri = Uri.parse(videoPath)
         val videoSource: MediaSource
         if (videoPath.endsWith(".mpd")) {
             videoSource = DashMediaSource(uri, dataSourceFactory,
@@ -130,10 +157,14 @@ open class VideoPlayerHolder(activity: Activity) {
             videoSource = ExtractorMediaSource(uri, dataSourceFactory,
                     extractorsFactory, mainHandler, null)
         }
-
-        // Prepare the player with the source.
-        player.seekTo(positionMs)
-        player.prepare(videoSource)
-        player.playWhenReady = true
+        return videoSource
     }
 }
+
+class ExtendedPlaybackLoadControl(defaultAllocator: DefaultAllocator) : DefaultLoadControl(defaultAllocator,
+        DEFAULT_MIN_BUFFER_MS,
+        DEFAULT_MAX_BUFFER_MS,
+        DEFAULT_BUFFER_FOR_PLAYBACK_MS * 2,
+        DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS * 2,
+        DEFAULT_TARGET_BUFFER_BYTES,
+        DEFAULT_PRIORITIZE_TIME_OVER_SIZE_THRESHOLDS)

@@ -52,22 +52,27 @@
                 android:id="@+id/comments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:drawableLeft="@drawable/ic_launch"
+                android:drawablePadding="12dp"
                 android:gravity="center"
+                android:onClick="@{(view) -> viewHolder.onCommentsClick()}"
                 android:padding="16dp"
                 android:text="@{viewHolder.postComments}"
+                android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 tools:text="comments" />
 
             <ImageView
                 android:id="@+id/placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:src="@drawable/list_placeholder"
                 app:layout_constraintBottom_toTopOf="@+id/comments"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                app:layout_constraintTop_toBottomOf="@+id/title" />
 
             <ImageView
                 android:id="@+id/imageView"
@@ -79,6 +84,21 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/title"
                 tools:srcCompat="@tools:sample/avatars" />
+
+            <Button
+                android:id="@+id/externalLinkButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:onClick="@{(view) -> viewHolder.onUrlClick()}"
+                android:text="@string/view_in_app"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@id/comments"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <com.google.android.exoplayer2.ui.AspectRatioFrameLayout
                 android:id="@+id/videoViewContainer"

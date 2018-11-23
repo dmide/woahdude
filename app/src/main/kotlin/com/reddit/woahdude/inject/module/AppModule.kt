@@ -1,7 +1,9 @@
 package com.reddit.woahdude.inject.module
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Resources
+import android.preference.PreferenceManager
 import dagger.Module
 import dagger.Provides
 
@@ -15,8 +17,12 @@ class AppModule(val appContext: Context) {
     }
 
     @Provides
-    fun provideResources(): Resources{
+    fun provideResources(): Resources {
         return appContext.resources
     }
 
+    @Provides
+    fun provideSharedPreferences(): SharedPreferences {
+        return PreferenceManager.getDefaultSharedPreferences(appContext)
+    }
 }

@@ -3,7 +3,6 @@ package com.reddit.woahdude.ui
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -21,21 +20,27 @@ import com.reddit.woahdude.common.*
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.network.RedditPost
 import com.reddit.woahdude.network.imageLoadRequest
-import com.reddit.woahdude.video.VideoPlayerHolder
+import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.util.weightChildVisibility
+import com.reddit.woahdude.video.VideoPlayerHoldersPool
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
 class ListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityListBinding
     private lateinit var viewModel: ListViewModel
     private lateinit var visibleViewsDisposable: Disposable
-    private lateinit var playerHolder: VideoPlayerHolder
-    private val listAdapter: ListAdapter = ListAdapter()
-    private var errorSnackbar: Snackbar? = null
-    private var isShouldResumePlayback = false
+    private val listAdapter = ListAdapter()
+    private val visibleStatePublishSubject = PublishSubject.create<VisibleState>()
+    private var snackbar: Snackbar? = null
+
+    @Inject
+    lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +48,8 @@ class ListActivity : AppCompatActivity() {
         Const.calcDeviceMetrics(this)
 
         val component = (application as WDApplication).component
+        component.inject(this)
+
         viewModel = ViewModelProviders.of(this, ViewModelFactory(component)).get(ListViewModel::class.java)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_list)
         binding.postList.apply {
@@ -58,41 +65,39 @@ class ListActivity : AppCompatActivity() {
         binding.setLifecycleOwner(this)
         binding.viewModel = viewModel
 
-        viewModel.errorMessage.observe(this, Observer { errorMessage ->
-            if (errorMessage != null) showError(errorMessage) else hideError()
+        viewModel.refreshMessage.observe(this, Observer { message ->
+            if (message != null) showRefreshSnack(message) else hideRefreshSnack()
         })
         viewModel.posts.observe(this, Observer { posts ->
             listAdapter.submitList(posts)
         })
-
-        playerHolder = VideoPlayerHolder(this)
     }
 
     override fun onPause() {
-        isShouldResumePlayback = playerHolder.isPlaying()
-        playerHolder.pause()
+        playerHoldersPool.pauseCurrent()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        if (isShouldResumePlayback) playerHolder.resume()
+        playerHoldersPool.resumeCurrent()
     }
 
     override fun onDestroy() {
-        playerHolder.release()
+        playerHoldersPool.release()
         visibleViewsDisposable.dispose()
         super.onDestroy()
     }
 
-    private fun showError(@StringRes errorMessage: Int) {
-        errorSnackbar = Snackbar.make(binding.root, errorMessage, Snackbar.LENGTH_INDEFINITE)
-        errorSnackbar?.setAction(R.string.retry) { viewModel.refresh() }
-        errorSnackbar?.show()
+    private fun showRefreshSnack(message: ListViewModel.RefreshMessage) {
+        hideRefreshSnack()
+        snackbar = Snackbar.make(binding.root, message.text, Snackbar.LENGTH_INDEFINITE)
+                .setAction(message.actionText) { viewModel.refresh() }
+                .apply { show() }
     }
 
-    private fun hideError() {
-        errorSnackbar?.dismiss()
+    private fun hideRefreshSnack() {
+        snackbar?.dismiss()
     }
 
     private fun setupRecyclerViewPreloader(listAdapter: ListAdapter): RecyclerViewPreloader<RedditPost> {
@@ -108,33 +113,35 @@ class ListActivity : AppCompatActivity() {
         }
 
         val sizeProvider = ViewPreloadSizeProvider<RedditPost>()
-        val preloader = RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 30 /*maxPreload*/)
+        val preloader = RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 9 /*maxPreload*/)
         return preloader
     }
 
     private fun setupVisibleViewsObserver(recyclerView: RecyclerView, llm: LinearLayoutManager): Disposable {
-        val publishSubject = PublishSubject.create<VisibleState>()
-        val disposable = publishSubject
+        val disposable = visibleStatePublishSubject
                 .throttleWithTimeout(250, TimeUnit.MILLISECONDS)
-                .map<View> { state ->
-                    (state.firstVisibleItem..state.lastVisibleItem)
+                // flatmap here is to hack around nulls
+                .flatMap<View> { state ->
+                    val view = (state.firstVisibleItem..state.lastVisibleItem)
                             .mapNotNull { index -> llm.findViewByPosition(index) }
                             .maxBy { child -> recyclerView.weightChildVisibility(child) }
+
+                    return@flatMap if (view != null) Observable.just(view) else Observable.empty()
                 }
                 .distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { mostVisibleChild ->
-                            playerHolder?.pause()
+                            playerHoldersPool.pauseCurrent() // pause playback when the focus changes
                             val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
-                            (holder as PostViewHolder).showVideoIfNeeded(playerHolder)
+                            (holder as PostViewHolder).showVideoIfNeeded()
                         },
                         { Log.e(javaClass.name, "error while observing visible items", it) })
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                publishSubject.onNext(VisibleState(llm.findFirstVisibleItemPosition(),
+                visibleStatePublishSubject.onNext(VisibleState(llm.findFirstVisibleItemPosition(),
                         llm.findLastVisibleItemPosition()))
             }
         })

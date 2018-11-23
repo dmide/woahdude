@@ -26,6 +26,7 @@ class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCal
 
     override fun onViewRecycled(holder: PostViewHolder) {
         holder.binding.progress.isVisible = false
+        holder.releaseVideoPlayerHolder()
         super.onViewRecycled(holder)
     }
 
@@ -36,11 +37,11 @@ class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCal
     class ListDiffUtilCallback : DiffUtil.ItemCallback<RedditPost>() {
 
         override fun areItemsTheSame(oldItem: RedditPost, newItem: RedditPost): Boolean {
-            return oldItem.indexInResponse == newItem.indexInResponse
+            return oldItem.name == newItem.name
         }
 
         override fun areContentsTheSame(oldItem: RedditPost, newItem: RedditPost): Boolean {
-            return oldItem.indexInResponse == newItem.indexInResponse
+            return oldItem.name == newItem.name
         }
     }
 }

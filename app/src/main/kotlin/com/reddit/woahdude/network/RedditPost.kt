@@ -6,8 +6,11 @@ import android.graphics.drawable.Drawable
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverter
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.reddit.woahdude.common.Const
+import com.google.gson.reflect.TypeToken
+import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.common.GlideRequest
 import com.reddit.woahdude.common.GlideRequests
 
@@ -28,23 +31,38 @@ data class RedditPost(
         val created: Long,
         @Embedded(prefix = "media")
         val media: Media?,
+        @SerializedName("crosspost_parent_list")
+        val crosspostParents: ArrayList<CrossPost>?,
         val thumbnail: String?,
         @SerializedName("link_flair_text")
         val type: String?,
-        val url: String?) {
+        val url: String?,
+        val permalink: String?) {
     // to be consistent w/ changing backend order, we need to keep a data like this
     var indexInResponse: Int = -1
 }
 
-fun RedditPost.imageLoadRequest(glide: GlideRequests, imageUrl: String? = getImageUrl()): GlideRequest<Drawable> {
-    return glide.load(imageUrl)
+data class CrossPost(@Embedded(prefix = "media") val media: Media? = null) {
+    @TypeConverter
+    fun crossPostListToString(crosspostParents: ArrayList<CrossPost>?): String {
+        return Gson().toJson(crosspostParents)
+    }
+
+    @TypeConverter
+    fun stringToCrossPostList(string: String): ArrayList<CrossPost>? {
+        val arrayType = object : TypeToken<ArrayList<CrossPost>>() {}.getType()
+        return Gson().fromJson(string, arrayType)
+    }
+}
+
+fun RedditPost.imageLoadRequest(glide: GlideRequests, imageResource: Any? = getImageResource()): GlideRequest<Drawable> {
+    return glide.load(imageResource)
             .placeholder(ColorDrawable(Color.TRANSPARENT))
             .override(Const.deviceWidth)
 }
 
-
-fun RedditPost.getImageUrl(): String? {
-    return ExternalResource.of(this).imageUrl()
+fun RedditPost.getImageResource(): Any? {
+    return ExternalResource.of(this).imageResource()
 }
 
 fun RedditPost.getPostType(): String? {
