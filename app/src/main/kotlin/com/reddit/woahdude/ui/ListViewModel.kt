@@ -29,25 +29,25 @@ class ListViewModel : BaseViewModel() {
     @Inject
     lateinit var sharedPreferences: SharedPreferences
 
-    val loadingVisibility: MutableLiveData<Int> = MutableLiveData()
+    val loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
     val refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
     val posts: LiveData<PagedList<RedditPost>> by lazy { initializedPagedListLiveData() }
 
     private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     override fun onCreated() {
-        loadingVisibility.value = View.GONE
+        loadingVisibility.value = false
 
         val disposable = repository.status
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { status ->
                     when (status) {
                         is RedditRepository.Status.LoadingStarted -> {
-                            loadingVisibility.value = View.VISIBLE
+                            loadingVisibility.value = true
                             refreshMessage.value = null
                         }
                         is RedditRepository.Status.LoadingFinished -> {
-                            loadingVisibility.value = View.GONE
+                            loadingVisibility.value = false
                         }
                         is RedditRepository.Status.LoadingFailed -> {
                             Log.e(javaClass.name, "onRetrievePostListError", status.t)

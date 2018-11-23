@@ -60,7 +60,15 @@ class ListActivity : AppCompatActivity() {
         }
         binding.swipeRefreshLayout.let { srl ->
             srl.setOnRefreshListener { viewModel.refresh() }
-            viewModel.loadingVisibility.observe(this, Observer { srl.isRefreshing = false })
+            val showProgress = Runnable { srl.isRefreshing = true }
+            viewModel.loadingVisibility.observe(this, Observer { isLoading ->
+                if (!isLoading) {
+                    srl.removeCallbacks(showProgress)
+                    srl.isRefreshing = false
+                } else {
+                    srl.postDelayed(showProgress, 1000) //show progress only after 1 second of loading
+                }
+            })
         }
         binding.setLifecycleOwner(this)
         binding.viewModel = viewModel
