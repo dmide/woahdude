@@ -38,14 +38,15 @@ class VideoActivity : AppCompatActivity() {
         }
 
         val dataSourceFactory = CacheDataSourceFactory(this, 100.megabytes, 20.megabytes)
-        playerHolder = object : VideoPlayerHolder(this@VideoActivity, dataSourceFactory) {
-            override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
-                super.onVideoSizeChanged(width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
-                binding.videoViewContainer.setAspectRatio(width.toFloat() / height.toFloat())
-            }
-        }
-        playerHolder?.prepareVideoSource("https://i.imgur.com/OBeI8Dy.mp4")
-        playerHolder?.bind(binding.videoView, binding.progress)
-        playerHolder?.resume()
+        playerHolder = VideoPlayerHolder(this@VideoActivity, dataSourceFactory)
+                .apply {
+                    // will be GCed
+                    sizeSubject.subscribe { (w, h) ->
+                        binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
+                    }
+                    prepareVideoSource("https://i.imgur.com/OBeI8Dy.mp4")
+                    bind(binding.videoView, binding.progress)
+                    resume()
+                }
     }
 }

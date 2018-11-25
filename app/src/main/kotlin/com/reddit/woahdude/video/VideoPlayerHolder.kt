@@ -21,6 +21,9 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.util.EventLogger
+import io.reactivex.subjects.BehaviorSubject
+import java.lang.Exception
+import java.lang.RuntimeException
 import javax.inject.Inject
 
 open class VideoPlayerHolder @Inject constructor(val context: Context,
@@ -32,8 +35,11 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
 
     private var progress: ProgressBar? = null
     private var currentVideoPath: String? = null
-    private var videoSizeChangeListener: ((width: Int, height: Int) -> Unit)? = null
-    private var pendingSize: Pair<Int, Int>? = null
+
+    var sizeSubject = BehaviorSubject.create<Size>()
+        private set
+    var errorSubject = BehaviorSubject.create<Exception>()
+        private set
 
     init {
         extractorsFactory = DefaultExtractorsFactory()
@@ -53,7 +59,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         player.addAnalyticsListener(object : EventLogger(null) {
             override fun onVideoSizeChanged(eventTime: AnalyticsListener.EventTime, width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
                 super.onVideoSizeChanged(eventTime, width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
-                this@VideoPlayerHolder.onVideoSizeChanged(width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
+                sizeSubject.onNext(Size(width, height))
             }
         })
         player.repeatMode = Player.REPEAT_MODE_ALL
@@ -78,25 +84,11 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
             }
 
             override fun onPlayerError(error: ExoPlaybackException?) {
-                Log.e(javaClass.name, "onPlayerError", error)
+                progress?.isVisible = false
+                errorSubject.onNext(error ?: RuntimeException("unknown player error"))
             }
         }
         player.addListener(playerListener)
-    }
-
-    open fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
-        if (videoSizeChangeListener == null) {
-            pendingSize = Pair(width, height)
-        }
-        videoSizeChangeListener?.invoke(width, height)
-    }
-
-    fun videoSizeChangeListener(listener: (width: Int, height: Int) -> Unit) {
-        videoSizeChangeListener = listener
-        pendingSize?.let {
-            videoSizeChangeListener?.invoke(it.first, it.second)
-            pendingSize = null
-        }
     }
 
     fun release() {
@@ -133,8 +125,12 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     fun unbind() {
         progress?.isVisible = false
         progress = null
-        videoSizeChangeListener = null
         player.setVideoTextureView(null)
+
+        sizeSubject.onComplete()
+        sizeSubject = BehaviorSubject.create()
+        errorSubject.onComplete()
+        errorSubject = BehaviorSubject.create()
     }
 
     fun prepareVideoSource(videoPath: String) {
@@ -160,6 +156,8 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         return videoSource
     }
 }
+
+data class Size(val w: Int, val h: Int)
 
 class ExtendedPlaybackLoadControl(defaultAllocator: DefaultAllocator) : DefaultLoadControl(defaultAllocator,
         DEFAULT_MIN_BUFFER_MS,

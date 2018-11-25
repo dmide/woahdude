@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.net.Uri
+import android.util.Log
 import androidx.core.view.isVisible
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,7 @@ import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.video.VideoPlayerHolder
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
+import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
 
@@ -32,6 +34,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     val postComments = MutableLiveData<String>()
     var redditPost: RedditPost? = null
     var videoPlayerHolder: VideoPlayerHolder? = null
+    var compositeDisposable: CompositeDisposable? = null
 
     fun bind(redditPost: RedditPost?) {
         this.redditPost = redditPost
@@ -63,10 +66,18 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
 
                     binding.videoViewContainer.isVisible = true
                     binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
-                    videoSizeChangeListener { w, h ->
-                        val widthModifier = Const.deviceWidth / w.toFloat()
-                        binding.videoViewContainer.layoutParams.height = (h * widthModifier).toInt()
-                        binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
+
+                    compositeDisposable = CompositeDisposable().apply {
+                        add(sizeSubject.subscribe { (w, h) ->
+                            val widthModifier = Const.deviceWidth / w.toFloat()
+                            val height = Math.min((h * widthModifier).toInt(), Const.contentHeight)
+                            binding.videoViewContainer.layoutParams.height = height
+                            binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
+                        })
+                        add(errorSubject.subscribe { e ->
+                            Log.e(javaClass.name, "onPlayerError", e)
+                            binding.externalLinkButton.isVisible = true
+                        })
                     }
                 }
             }
@@ -76,6 +87,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     }
 
     fun releaseVideoPlayerHolder() {
+        compositeDisposable?.dispose()
         videoPlayerHolder?.let {
             it.pause()
             it.unbind()
