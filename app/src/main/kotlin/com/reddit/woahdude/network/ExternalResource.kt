@@ -17,7 +17,7 @@ sealed class ExternalResource {
             return when {
                 url.endsWith("giphy.gif") -> Giphy(url)
                 url.contains("v.redd.it") -> RedditVideo(url, redditPost.media ?: redditPost.crosspostParents?.get(0)?.media)
-                url.contains("gfycat.com") && type == "gifv" -> Gfycat(url)
+                url.contains("gfycat.com") && type == "gifv" -> Gfycat(url, redditPost.media ?: redditPost.crosspostParents?.get(0)?.media)
                 url.contains("imgur.com") && url.endsWith(".gifv") -> ImgurVideo(url)
                 url.contains("youtube.com") || url.contains("youtu.be") -> Youtube(url)
                 url.contains("vimeo.com") -> Vimeo(url)
@@ -114,15 +114,26 @@ sealed class ExternalResource {
         override fun typeString(): String? = "redditV"
     }
 
-    class Gfycat(private val url: String) : ExternalResource() {
+    class Gfycat(private val url: String, private val media: Media?) : ExternalResource() {
         override fun imageResource(): String? {
-            return url.replace("gfycat.com", "thumbs.gfycat.com") + "-poster.jpg"
+            return "https://thumbs.gfycat.com/${getHash()}-poster.jpg"
         }
 
         override fun videoUrl(): String? {
-            return url.replace("gfycat.com", "giant.gfycat.com") + ".mp4"
+            return "https://giant.gfycat.com/${getHash()}.mp4"
         }
 
         override fun typeString(): String? = "gfycat"
+
+        /*
+            Some hashes are case-sensitive. thumbnailUrl always contains hash with correct case
+            while url is always lowercase.
+         */
+        private fun getHash(): String {
+            media?.embedded?.thumbnailUrl?.let {
+                return it.removePrefix("https://thumbs.gfycat.com/").removeSuffix("-size_restricted.gif")
+            }
+            return url.removePrefix("https://gfycat.com/")
+        }
     }
 }

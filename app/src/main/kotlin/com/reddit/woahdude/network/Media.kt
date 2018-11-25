@@ -5,7 +5,10 @@ import com.google.gson.annotations.SerializedName
 
 class Media(
         @Embedded(prefix = "media_video")
-        val reddit_video: RedditVideo?)
+        val reddit_video: RedditVideo?,
+        @Embedded(prefix = "oembed")
+        @SerializedName("oembed")
+        val embedded: Oembed?)
 
 
 class RedditVideo(
@@ -13,3 +16,7 @@ class RedditVideo(
         val fallback_url: String?,
         val height: Int?,
         val width: Int?)
+
+class Oembed(
+        @SerializedName("thumbnail_url")
+        val thumbnailUrl: String?)
