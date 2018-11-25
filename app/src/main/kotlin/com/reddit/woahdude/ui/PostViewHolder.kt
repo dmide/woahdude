@@ -13,7 +13,6 @@ import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.*
-import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.video.VideoPlayerHolder
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
@@ -69,9 +68,8 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
 
                     compositeDisposable = CompositeDisposable().apply {
                         add(sizeSubject.subscribe { (w, h) ->
-                            val widthModifier = Const.deviceWidth / w.toFloat()
-                            val height = Math.min((h * widthModifier).toInt(), Const.contentHeight)
-                            binding.videoViewContainer.layoutParams.height = height
+                            val dimensions = ExternalResource.getAdaptedMediaDimensions(w, h)
+                            binding.videoViewContainer.layoutParams.height = dimensions.height
                             binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
                         })
                         add(errorSubject.subscribe { e ->
