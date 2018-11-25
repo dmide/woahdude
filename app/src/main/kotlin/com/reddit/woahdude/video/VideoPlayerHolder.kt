@@ -25,7 +25,7 @@ import javax.inject.Inject
 
 open class VideoPlayerHolder @Inject constructor(val context: Context,
                                                  val dataSourceFactory: DataSource.Factory) {
-    private val mainHandler: Handler
+    private val mainHandler: Handler = Handler()
     private val extractorsFactory: ExtractorsFactory
     private val player: SimpleExoPlayer
     private var playerListener: ExoPlayer.EventListener? = null
@@ -36,8 +36,6 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     private var pendingSize: Pair<Int, Int>? = null
 
     init {
-        mainHandler = Handler()
-
         extractorsFactory = DefaultExtractorsFactory()
         val bandwidthFraction = 3f; // prefer better quality even on not-so-good connections
         val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(
@@ -102,10 +100,10 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     }
 
     fun release() {
-        progress = null
         player.playWhenReady = false
         player.removeListener(playerListener)
         playerListener = null
+        unbind()
         player.release()
     }
 
@@ -133,7 +131,6 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     }
 
     fun unbind() {
-        player.seekTo(0)
         progress?.isVisible = false
         progress = null
         videoSizeChangeListener = null
@@ -147,7 +144,6 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
 
         player.stop()
         currentVideoPath = videoPath
-        player.seekTo(0)
         player.prepare(createMediaSource(videoPath))
     }
 

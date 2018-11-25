@@ -33,11 +33,14 @@ class VideoPlayerHoldersPool @Inject constructor(val playerHolderProvider: Provi
     }
 
     fun release() {
-        used.forEach {
-            it.release()
+        currentPlayer = null
+        used.apply {
+            forEach { it.release() }
+            clear()
         }
-        reserve.forEach {
-            it.release()
+        reserve.apply {
+            forEach { it.release() }
+            clear()
         }
     }
 }
