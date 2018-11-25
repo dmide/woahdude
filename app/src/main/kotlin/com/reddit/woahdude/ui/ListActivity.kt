@@ -127,17 +127,15 @@ class ListActivity : AppCompatActivity() {
 
     private fun setupVisibleViewsObserver(recyclerView: RecyclerView, llm: LinearLayoutManager): Disposable {
         val disposable = visibleStatePublishSubject
-                .throttleWithTimeout(250, TimeUnit.MILLISECONDS)
-                // flatmap here is to hack around nulls
-                .flatMap<View> { state ->
+                // switchMap here is to hack around null views
+                .switchMap<View> { state ->
                     val view = (state.firstVisibleItem..state.lastVisibleItem)
                             .mapNotNull { index -> llm.findViewByPosition(index) }
                             .maxBy { child -> recyclerView.weightChildVisibility(child) }
 
-                    return@flatMap if (view != null) Observable.just(view) else Observable.empty()
+                    return@switchMap if (view != null) Observable.just(view) else Observable.empty()
                 }
                 .distinctUntilChanged()
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { mostVisibleChild ->
                             playerHoldersPool.pauseCurrent() // pause playback when the focus changes
