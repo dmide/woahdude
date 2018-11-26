@@ -87,12 +87,13 @@ dependencies {
     kapt "com.google.dagger:dagger-compiler:$dagger2_version"
     compileOnly "org.glassfish:javax.annotation:3.1.1"
 
-    implementation 'com.github.bumptech.glide:glide:4.8.0'
-    kapt 'com.github.bumptech.glide:compiler:4.8.0'
-    implementation ("com.github.bumptech.glide:recyclerview-integration:4.8.0") {
+    implementation "com.github.bumptech.glide:glide:$glide_version"
+    kapt "com.github.bumptech.glide:compiler:$glide_version"
+    implementation ("com.github.bumptech.glide:recyclerview-integration:$glide_version") {
         // Excludes the support library because it's already included by Glide.
         transitive = false
     }
+    implementation "com.github.bumptech.glide:okhttp3-integration:$glide_version"
 
     //Rx
     implementation "io.reactivex.rxjava2:rxjava:2.2.0"
