@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.util.Log
 import androidx.core.view.isVisible
@@ -13,6 +15,7 @@ import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.*
+import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.video.VideoPlayerHolder
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
@@ -28,9 +31,11 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     @Inject
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
+    val maxImageHeight = Const.contentHeight
     val postTitle = MutableLiveData<String>()
     val postType = MutableLiveData<String>()
     val postComments = MutableLiveData<String>()
+
     var redditPost: RedditPost? = null
     var videoPlayerHolder: VideoPlayerHolder? = null
     var compositeDisposable: CompositeDisposable? = null
@@ -39,49 +44,61 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
         this.redditPost = redditPost
 
         if (redditPost == null) {
-            postTitle.value = ""
-            postType.value = ""
-            postComments.value = ""
+            listOf(postTitle, postType, postComments).forEach { it.value = "" }
             binding.externalLinkButton.isVisible = false
         } else {
-            val commentCountString = resources.getString(R.string.comments, redditPost.commentsCount)
             postTitle.value = adapterPosition.toString() + ". " + redditPost.title
             postType.value = redditPost.getPostType()
-            postComments.value = commentCountString
+            postComments.value = resources.getString(R.string.comments, redditPost.commentsCount)
 
-            val imageResource = redditPost.getImageResource()
-            binding.imageView.isVisible = imageResource != null
-            binding.videoViewContainer.isVisible = false
-            binding.progress.isVisible = true
-            redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
-                    .onFinish { binding.progress.isVisible = false }
-                    .into(binding.imageView)
+            loadImage(redditPost)
+            loadVideo(redditPost)
+
             binding.externalLinkButton.isVisible = redditPost.getVideoUrl() == null && redditPost.getImageResource() == null
-
-            redditPost.getVideoUrl()?.let { videoUrl ->
-                videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
-                    prepareVideoSource(videoUrl)
-                    bind(binding.videoView, binding.progress)
-
-                    binding.videoViewContainer.isVisible = true
-                    binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
-
-                    compositeDisposable = CompositeDisposable().apply {
-                        add(sizeSubject.subscribe { (w, h) ->
-                            val dimensions = ExternalResource.getAdaptedMediaDimensions(w, h)
-                            binding.videoViewContainer.layoutParams.height = dimensions.height
-                            binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
-                        })
-                        add(errorSubject.subscribe { e ->
-                            Log.e(javaClass.name, "onPlayerError", e)
-                            binding.externalLinkButton.isVisible = true
-                        })
-                    }
-                }
-            }
         }
 
         binding.viewHolder = this
+    }
+
+    private fun loadImage(redditPost: RedditPost) {
+        val imageResource = redditPost.getImageResource()
+        binding.imageView.isVisible = imageResource != null
+
+        binding.progress.isVisible = true
+        binding.imageView.background = null
+        redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
+                .onFinish {
+                    binding.progress.isVisible = false
+                    binding.imageView.background = ColorDrawable(Color.BLACK)
+                }
+                .into(binding.imageView)
+    }
+
+    private fun loadVideo(redditPost: RedditPost) {
+        binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
+
+        val videoUrl = redditPost.getVideoUrl()
+        binding.videoViewContainer.isVisible = videoUrl != null
+        if (videoUrl == null) {
+            return
+        }
+
+        videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
+            prepareVideoSource(videoUrl)
+            bind(binding.videoView, binding.progress)
+
+            compositeDisposable = CompositeDisposable().apply {
+                add(sizeSubject.subscribe { (w, h) ->
+                    val dimensions = ExternalResource.getAdaptedMediaDimensions(w, h)
+                    binding.videoViewContainer.layoutParams.height = dimensions.height
+                    binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
+                })
+                add(errorSubject.subscribe { e ->
+                    Log.e(javaClass.name, "onPlayerError", e)
+                    binding.externalLinkButton.isVisible = true
+                })
+            }
+        }
     }
 
     fun releaseVideoPlayerHolder() {
