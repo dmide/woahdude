@@ -30,7 +30,7 @@ sealed class ExternalResource {
 
         fun getAdaptedMediaDimensions(w: Int, h: Int): MediaDimensions {
             val widthModifier = Const.deviceWidth / w.toFloat()
-            val adaptedHeight = Math.min((h * widthModifier).toInt(), Const.contentHeight)
+            val adaptedHeight = Math.min((h * widthModifier).toInt(), Const.optimalContentHeight)
             return MediaDimensions(Const.deviceWidth, adaptedHeight)
         }
     }

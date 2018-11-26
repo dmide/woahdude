@@ -20,6 +20,8 @@ object Const {
         private set
     var contentHeight: Int = 0
         private set
+    var optimalContentHeight: Int = 0
+        private set
     var density: Float = 0.toFloat()
         private set
     var isInitialised: Boolean = false
@@ -54,6 +56,7 @@ object Const {
         }
 
         contentHeight = deviceHeight - navBarHeight - statusBarHeight
+        optimalContentHeight = contentHeight - navBarHeight
 
         isInitialised = true
     }

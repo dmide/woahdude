@@ -32,7 +32,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     @Inject
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
-    val maxImageHeight = Const.contentHeight
+    val maxImageHeight = Const.optimalContentHeight
     val postTitle = MutableLiveData<String>()
     val postType = MutableLiveData<String>()
     val postComments = MutableLiveData<String>()
