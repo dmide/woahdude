@@ -94,7 +94,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
                     binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
                 })
                 add(errorSubject.subscribe { e ->
-                    Log.e(javaClass.name, "onPlayerError", e)
+                    Log.e(PostViewHolder::javaClass.name, "onPlayerError", e)
                     binding.externalLinkButton.isVisible = true
                 })
             }

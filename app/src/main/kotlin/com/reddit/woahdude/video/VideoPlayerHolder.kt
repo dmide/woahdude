@@ -13,6 +13,7 @@ import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.extractor.ExtractorsFactory
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.MediaSourceEventListener
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
@@ -22,6 +23,7 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.util.EventLogger
 import io.reactivex.subjects.BehaviorSubject
+import java.io.IOException
 import java.lang.Exception
 import java.lang.RuntimeException
 import javax.inject.Inject
@@ -61,16 +63,13 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
                 super.onVideoSizeChanged(eventTime, width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
                 sizeSubject.onNext(Size(width, height))
             }
-        })
-        player.repeatMode = Player.REPEAT_MODE_ALL
 
-        playerListener = object : ExoPlayer.EventListener {
-            override fun onLoadingChanged(isLoading: Boolean) {
+            override fun onLoadingChanged(eventTime: AnalyticsListener.EventTime?, isLoading: Boolean) {
                 progress?.isVisible = isLoading
             }
 
-            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                when (playbackState) {
+            override fun onPlayerStateChanged(eventTime: AnalyticsListener.EventTime?, playWhenReady: Boolean, state: Int) {
+                when (state) {
                     Player.STATE_READY -> {
                         if (playWhenReady) progress?.isVisible = false
                     }
@@ -83,12 +82,22 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
                 }
             }
 
-            override fun onPlayerError(error: ExoPlaybackException?) {
+            override fun onDrmSessionManagerError(eventTime: AnalyticsListener.EventTime?, e: Exception?) = onError(e)
+
+            override fun onPlayerError(eventTime: AnalyticsListener.EventTime?, e: ExoPlaybackException?) = onError(e)
+
+            override fun onLoadError(eventTime: AnalyticsListener.EventTime?,
+                                     loadEventInfo: MediaSourceEventListener.LoadEventInfo?,
+                                     mediaLoadData: MediaSourceEventListener.MediaLoadData?,
+                                     e: IOException?, wasCanceled: Boolean) = onError(e)
+
+            private fun onError(error: Exception?) {
                 progress?.isVisible = false
                 errorSubject.onNext(error ?: RuntimeException("unknown player error"))
             }
-        }
-        player.addListener(playerListener)
+        })
+
+        player.repeatMode = Player.REPEAT_MODE_ALL
     }
 
     fun release() {
@@ -123,6 +132,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     }
 
     fun unbind() {
+        player.stop()
         progress?.isVisible = false
         progress = null
         player.setVideoTextureView(null)
@@ -138,7 +148,6 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
             return
         }
 
-        player.stop()
         currentVideoPath = videoPath
         player.prepare(createMediaSource(videoPath))
     }
