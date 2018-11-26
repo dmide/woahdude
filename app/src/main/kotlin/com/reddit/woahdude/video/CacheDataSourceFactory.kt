@@ -24,7 +24,7 @@ internal class CacheDataSourceFactory(private val context: Context,
         val bandwidthMeter = DefaultBandwidthMeter()
         defaultDatasourceFactory = DefaultDataSourceFactory(context,
                 bandwidthMeter,
-                DefaultHttpDataSourceFactory(userAgent, bandwidthMeter))
+                DefaultHttpDataSourceFactory(userAgent, 15000, 15000, true))
     }
 
     override fun createDataSource(): DataSource {
