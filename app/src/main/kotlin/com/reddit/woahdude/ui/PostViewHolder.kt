@@ -10,6 +10,7 @@ import android.net.Uri
 import android.util.Log
 import android.view.View
 import androidx.core.view.isVisible
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.reddit.woahdude.R
@@ -24,7 +25,7 @@ import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
 
-class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
+class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
     @Inject
     lateinit var resources: Resources
     @Inject
@@ -33,24 +34,24 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
     val maxImageHeight = Const.optimalContentHeight
-    val postTitle = MutableLiveData<String>()
-    val postType = MutableLiveData<String>()
-    val postComments = MutableLiveData<String>()
+    val postTitle: LiveData<String> = MutableLiveData()
+    val postType: LiveData<String> = MutableLiveData()
+    val postComments: LiveData<String> = MutableLiveData()
 
-    var redditPost: RedditPost? = null
-    var videoPlayerHolder: VideoPlayerHolder? = null
-    var compositeDisposable: CompositeDisposable? = null
+    private var redditPost: RedditPost? = null
+    private var videoPlayerHolder: VideoPlayerHolder? = null
+    private var compositeDisposable: CompositeDisposable? = null
 
     fun bind(redditPost: RedditPost?) {
         this.redditPost = redditPost
 
         if (redditPost == null) {
-            listOf(postTitle, postType, postComments).forEach { it.value = "" }
+            listOf(postTitle, postType, postComments).forEach { (it as MutableLiveData).value = "" }
             binding.externalLinkButton.isVisible = false
         } else {
-            postTitle.value = adapterPosition.toString() + ". " + redditPost.title
-            postType.value = redditPost.getPostType()
-            postComments.value = resources.getString(R.string.comments, redditPost.commentsCount)
+            (postTitle as MutableLiveData).value = adapterPosition.toString() + ". " + redditPost.title
+            (postType as MutableLiveData).value = redditPost.getPostType()
+            (postComments as MutableLiveData).value = resources.getString(R.string.comments, redditPost.commentsCount)
 
             loadImage(redditPost)
             loadVideo(redditPost)
@@ -89,7 +90,7 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
             bind(binding.videoView)
 
             compositeDisposable = CompositeDisposable().apply {
-                add(loadingSubject.map { if (it) View.VISIBLE else View.INVISIBLE }.subscribe {
+                add(loadingSubject.map { if (it) View.VISIBLE else View.GONE }.subscribe {
                     binding.progress.visibility = it
                 })
                 add(sizeSubject.subscribe { (w, h) ->
@@ -105,21 +106,20 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
         }
     }
 
-    fun releaseVideoPlayerHolder() {
-        compositeDisposable?.dispose()
+    fun release() {
         videoPlayerHolder?.let {
             it.pause()
             it.unbind()
             playerHoldersPool.putBack(it)
         }
         videoPlayerHolder = null
+        compositeDisposable?.dispose()
     }
 
     fun showVideoIfNeeded() {
-        if (redditPost?.getVideoUrl() == null) {
-            return
+        if (redditPost?.getVideoUrl() != null) {
+            videoPlayerHolder?.resume()
         }
-        videoPlayerHolder?.resume()
     }
 
     fun onCommentsClick() {

@@ -25,8 +25,7 @@ class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCal
     }
 
     override fun onViewRecycled(holder: PostViewHolder) {
-        holder.binding.progress.isVisible = false
-        holder.releaseVideoPlayerHolder()
+        holder.release()
         super.onViewRecycled(holder)
     }
 
