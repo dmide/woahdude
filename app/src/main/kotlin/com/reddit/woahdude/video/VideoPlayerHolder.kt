@@ -3,10 +3,7 @@ package com.reddit.woahdude.video
 import android.content.Context
 import android.net.Uri
 import android.os.Handler
-import android.util.Log
 import android.view.TextureView
-import android.widget.ProgressBar
-import androidx.core.view.isVisible
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
@@ -33,14 +30,14 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     private val mainHandler: Handler = Handler()
     private val extractorsFactory: ExtractorsFactory
     private val player: SimpleExoPlayer
-    private var playerListener: ExoPlayer.EventListener? = null
 
-    private var progress: ProgressBar? = null
     private var currentVideoPath: String? = null
 
     var sizeSubject = BehaviorSubject.create<Size>()
         private set
     var errorSubject = BehaviorSubject.create<Exception>()
+        private set
+    var loadingSubject = BehaviorSubject.create<Boolean>()
         private set
 
     init {
@@ -52,12 +49,11 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
                 DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS,
                 bandwidthFraction)
         val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
-
         val defaultAllocator = DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
         val loadControl = ExtendedPlaybackLoadControl(defaultAllocator)
 
         player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl)
-        player.addListener(VideoEventListener())
+        player.repeatMode = Player.REPEAT_MODE_ALL
         player.addAnalyticsListener(object : EventLogger(null) {
             override fun onVideoSizeChanged(eventTime: AnalyticsListener.EventTime, width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
                 super.onVideoSizeChanged(eventTime, width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
@@ -65,20 +61,13 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
             }
 
             override fun onLoadingChanged(eventTime: AnalyticsListener.EventTime?, isLoading: Boolean) {
-                progress?.isVisible = isLoading
+                loadingSubject.onNext(isLoading)
             }
 
             override fun onPlayerStateChanged(eventTime: AnalyticsListener.EventTime?, playWhenReady: Boolean, state: Int) {
                 when (state) {
-                    Player.STATE_READY -> {
-                        if (playWhenReady) progress?.isVisible = false
-                    }
-                    Player.STATE_IDLE -> {
-                        progress?.isVisible = true
-                    }
-                    Player.STATE_BUFFERING -> {
-                        progress?.isVisible = true
-                    }
+                    Player.STATE_READY -> loadingSubject.onNext(false)
+                    Player.STATE_IDLE, Player.STATE_BUFFERING -> loadingSubject.onNext(true)
                 }
             }
 
@@ -92,31 +81,17 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
                                      e: IOException?, wasCanceled: Boolean) = onError(e)
 
             private fun onError(error: Exception?) {
-                progress?.isVisible = false
+                loadingSubject.onNext(false)
                 errorSubject.onNext(error ?: RuntimeException("unknown player error"))
             }
         })
-
-        player.repeatMode = Player.REPEAT_MODE_ALL
-    }
-
-    fun release() {
-        player.playWhenReady = false
-        player.removeListener(playerListener)
-        playerListener = null
-        unbind()
-        player.release()
     }
 
     fun pause() {
         player.playWhenReady = false
-        progress?.isVisible = false
     }
 
     fun resume() {
-        if (progress == null) {
-            throw IllegalStateException("bind() must be called before resume")
-        }
         player.playWhenReady = true
     }
 
@@ -126,30 +101,31 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         bind() should be called after prepareVideoSource() to prevent
         previous videoSource rogue frames from appearing
      */
-    fun bind(videoView: TextureView, progress: ProgressBar) {
-        this.progress = progress
+    fun bind(videoView: TextureView) {
         player.setVideoTextureView(videoView)
     }
 
     fun unbind() {
-        player.stop()
-        progress?.isVisible = false
-        progress = null
+        player.stop(true)
+        currentVideoPath = null
+        loadingSubject.onNext(false)
         player.setVideoTextureView(null)
 
-        sizeSubject.onComplete()
+        listOf(loadingSubject, sizeSubject, errorSubject).forEach { it.onComplete() }
+        loadingSubject = BehaviorSubject.create()
         sizeSubject = BehaviorSubject.create()
-        errorSubject.onComplete()
         errorSubject = BehaviorSubject.create()
     }
 
     fun prepareVideoSource(videoPath: String) {
-        if (videoPath.equals(currentVideoPath)) {
-            return
-        }
-
+        if (videoPath == currentVideoPath) return
         currentVideoPath = videoPath
         player.prepare(createMediaSource(videoPath))
+    }
+
+    fun release() {
+        unbind()
+        player.release()
     }
 
     private fun createMediaSource(videoPath: String): MediaSource {
@@ -162,6 +138,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
             videoSource = ExtractorMediaSource(uri, dataSourceFactory,
                     extractorsFactory, mainHandler, null)
         }
+
         return videoSource
     }
 }

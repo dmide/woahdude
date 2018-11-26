@@ -1,6 +1,7 @@
 package com.reddit.woahdude.ui
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
@@ -44,8 +45,12 @@ class VideoActivity : AppCompatActivity() {
                     sizeSubject.subscribe { (w, h) ->
                         binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
                     }
+                    // will be GCed
+                    loadingSubject.map { if (it) View.VISIBLE else View.INVISIBLE }.subscribe {
+                        binding.progress.visibility = it
+                    }
                     prepareVideoSource("https://i.imgur.com/OBeI8Dy.mp4")
-                    bind(binding.videoView, binding.progress)
+                    bind(binding.videoView)
                     resume()
                 }
     }

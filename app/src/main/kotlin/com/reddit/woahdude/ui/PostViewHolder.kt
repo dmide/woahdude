@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import androidx.core.view.isVisible
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
@@ -85,9 +86,12 @@ class PostViewHolder(val binding: ListItemBinding) : RecyclerView.ViewHolder(bin
 
         videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
             prepareVideoSource(videoUrl)
-            bind(binding.videoView, binding.progress)
+            bind(binding.videoView)
 
             compositeDisposable = CompositeDisposable().apply {
+                add(loadingSubject.map { if (it) View.VISIBLE else View.INVISIBLE }.subscribe {
+                    binding.progress.visibility = it
+                })
                 add(sizeSubject.subscribe { (w, h) ->
                     val dimensions = ExternalResource.getAdaptedMediaDimensions(w, h)
                     binding.videoViewContainer.layoutParams.height = dimensions.height
