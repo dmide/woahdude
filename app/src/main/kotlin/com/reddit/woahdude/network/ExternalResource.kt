@@ -21,7 +21,7 @@ sealed class ExternalResource {
                         ?: redditPost.crosspostParents?.get(0)?.media)
                 url.contains("gfycat.com") && type == "gifv" -> Gfycat(url, redditPost.media
                         ?: redditPost.crosspostParents?.get(0)?.media)
-                url.contains("imgur.com") && url.endsWith(".gifv") -> ImgurVideo(url)
+                url.contains("imgur.com") && url.endsWith(".gifv") -> ImgurVideo(redditPost)
                 url.contains("youtube.com") || url.contains("youtu.be") -> Youtube(url)
                 url.contains("vimeo.com") -> Vimeo(url)
                 else -> Default(type, url)
@@ -84,8 +84,20 @@ sealed class ExternalResource {
         }
     }
 
-    class ImgurVideo(private val url: String) : ExternalResource() {
-        override fun imageResource(): String? = url.replace(".gifv", "h.jpg")
+    class ImgurVideo(private val redditPost: RedditPost) : ExternalResource() {
+        val url = redditPost.url!! // always non-null at this point
+
+        override fun imageResource(): Any? {
+            val height = redditPost.thumbnailHeight
+            val width = redditPost.thumbnailWidth
+            if (height != null && width != null) { //better to get blank preview but with correct dimensions
+                val dimensions = getAdaptedMediaDimensions(width, height)
+                val drawable = WrappedDrawable(ColorDrawable(Color.TRANSPARENT))
+                drawable.setBounds(0, 0, dimensions.width, dimensions.height)
+                return drawable
+            }
+            return url.replace(".gifv", "h.jpg")
+        }
 
         override fun videoUrl(): String? = url.replace(".gifv", ".mp4")
 
