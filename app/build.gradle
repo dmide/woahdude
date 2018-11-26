@@ -46,26 +46,6 @@ android {
 }
 
 dependencies {
-//    implementation Libs.kotlin
-//    implementation Libs.ktx
-//
-//    implementation Libs.lifecycle
-//    implementation Libs.appcompat
-//    implementation Libs.design
-//    implementation Libs.recyclerview
-//    implementation Libs.constraint_layout
-//
-//    implementation Libs.room
-//    kapt Libs.roomCompiler
-//
-//    implementation Libs.retrofit
-//    implementation Libs.retrofitRx
-//    implementation Libs.retrofitMoshi
-//
-//    implementation Libs.dagger2
-//    kapt Libs.dagger2Compiler
-//    compileOnly Libs.daggerAnnotations
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.core:core-ktx:1.0.1"
 
