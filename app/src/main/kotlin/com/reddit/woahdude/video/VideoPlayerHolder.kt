@@ -1,8 +1,10 @@
 package com.reddit.woahdude.video
 
 import android.content.Context
+import android.graphics.Color
 import android.net.Uri
 import android.os.Handler
+import android.view.Surface
 import android.view.TextureView
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.analytics.AnalyticsListener
@@ -16,6 +18,7 @@ import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.*
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.util.EventLogger
@@ -32,6 +35,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
     private val player: SimpleExoPlayer
 
     private var currentVideoPath: String? = null
+    private var layout: AspectRatioFrameLayout? = null
 
     var sizeSubject = BehaviorSubject.create<Size>()
         private set
@@ -62,6 +66,10 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
 
             override fun onLoadingChanged(eventTime: AnalyticsListener.EventTime?, isLoading: Boolean) {
                 loadingSubject.onNext(isLoading)
+            }
+
+            override fun onRenderedFirstFrame(eventTime: AnalyticsListener.EventTime?, surface: Surface?) {
+                layout?.setBackgroundColor(Color.BLACK)
             }
 
             override fun onPlayerStateChanged(eventTime: AnalyticsListener.EventTime?, playWhenReady: Boolean, state: Int) {
@@ -101,8 +109,10 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         bind() should be called after prepareVideoSource() to prevent
         previous videoSource rogue frames from appearing
      */
-    fun bind(videoView: TextureView) {
+    fun bind(videoView: TextureView, layout: AspectRatioFrameLayout) {
         player.setVideoTextureView(videoView)
+        this.layout = layout
+        layout.background = null
     }
 
     fun unbind() {
@@ -110,6 +120,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         currentVideoPath = null
         loadingSubject.onNext(false)
         player.setVideoTextureView(null)
+        layout = null
 
         listOf(loadingSubject, sizeSubject, errorSubject).forEach { it.onComplete() }
         loadingSubject = BehaviorSubject.create()

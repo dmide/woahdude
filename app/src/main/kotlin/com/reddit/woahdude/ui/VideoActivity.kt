@@ -50,7 +50,7 @@ class VideoActivity : AppCompatActivity() {
                         binding.progress.visibility = it
                     }
                     prepareVideoSource("https://i.imgur.com/OBeI8Dy.mp4")
-                    bind(binding.videoView)
+                    bind(binding.videoView, binding.videoViewContainer)
                     resume()
                 }
     }

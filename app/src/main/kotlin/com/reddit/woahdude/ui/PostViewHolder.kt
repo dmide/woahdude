@@ -87,7 +87,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
         videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
             prepareVideoSource(videoUrl)
-            bind(binding.videoView)
+            bind(binding.videoView, binding.videoViewContainer)
 
             compositeDisposable = CompositeDisposable().apply {
                 val loadingDisposable = loadingSubject.map { if (it) View.VISIBLE else View.GONE }.subscribe {

@@ -4,28 +4,28 @@ import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.drawable.Drawable
 
-class WrappedDrawable(protected val drawable: Drawable) : Drawable() {
+class WrappedDrawable(val underlying: Drawable) : Drawable() {
 
     override fun setBounds(left: Int, top: Int, right: Int, bottom: Int) {
         super.setBounds(left, top, right, bottom)
-        drawable.setBounds(left, top, right, bottom)
+        underlying.setBounds(left, top, right, bottom)
     }
 
     override fun setAlpha(alpha: Int) {
-        drawable.alpha = alpha
+        underlying.alpha = alpha
     }
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
-        drawable.colorFilter = colorFilter
+        underlying.colorFilter = colorFilter
     }
 
     override fun draw(canvas: Canvas) {
-        drawable.draw(canvas)
+        underlying.draw(canvas)
     }
 
-    override fun getOpacity() = drawable.opacity
+    override fun getOpacity() = underlying.opacity
 
-    override fun getIntrinsicWidth() = drawable.bounds.width()
+    override fun getIntrinsicWidth() = underlying.bounds.width()
 
-    override fun getIntrinsicHeight() = drawable.bounds.height()
+    override fun getIntrinsicHeight() = underlying.bounds.height()
 }
