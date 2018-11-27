@@ -71,37 +71,3 @@ fun GlideRequest<Drawable>.onFinish(onSuccess: () -> Unit, onError: (Exception?)
         }
     })
 }
-
-/**
- * Clear the given surface Texture by attaching a GL context and clearing the surface.
- * @param texture a valid SurfaceTexture
- */
-fun clearSurface(texture: SurfaceTexture?) {
-    if (texture == null) {
-        return
-    }
-
-    val egl = EGLContext.getEGL() as EGL10
-    val display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY)
-    egl.eglInitialize(display, null)
-
-    val attribList = intArrayOf(EGL10.EGL_RED_SIZE, 8, EGL10.EGL_GREEN_SIZE, 8, EGL10.EGL_BLUE_SIZE, 8, EGL10.EGL_ALPHA_SIZE, 8, EGL10.EGL_RENDERABLE_TYPE, EGL10.EGL_WINDOW_BIT, EGL10.EGL_NONE, 0, // placeholder for recordable [@-3]
-            EGL10.EGL_NONE)
-    val configs = arrayOfNulls<EGLConfig>(1)
-    val numConfigs = IntArray(1)
-    egl.eglChooseConfig(display, attribList, configs, configs.size, numConfigs)
-    val config = configs[0]
-    val context = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, intArrayOf(12440, 2, EGL10.EGL_NONE))
-    val eglSurface = egl.eglCreateWindowSurface(display, config, texture,
-            intArrayOf(EGL10.EGL_NONE))
-
-    egl.eglMakeCurrent(display, eglSurface, eglSurface, context)
-    GLES20.glClearColor(0f, 0f, 0f, 1f)
-    GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
-    egl.eglSwapBuffers(display, eglSurface)
-    egl.eglDestroySurface(display, eglSurface)
-    egl.eglMakeCurrent(display, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE,
-            EGL10.EGL_NO_CONTEXT)
-    egl.eglDestroyContext(display, context)
-    egl.eglTerminate(display)
-}

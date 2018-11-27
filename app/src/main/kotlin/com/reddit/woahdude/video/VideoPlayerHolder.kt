@@ -16,18 +16,16 @@ import com.google.android.exoplayer2.source.MediaSourceEventListener
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.*
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.util.EventLogger
-import com.reddit.woahdude.util.clearSurface
 import io.reactivex.subjects.BehaviorSubject
 import timber.log.Timber
 import java.io.IOException
-import java.lang.Exception
-import java.lang.RuntimeException
 import javax.inject.Inject
 
 open class VideoPlayerHolder @Inject constructor(val context: Context,
@@ -72,6 +70,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
 
             override fun onRenderedFirstFrame(eventTime: AnalyticsListener.EventTime?, surface: Surface?) {
                 layout?.setBackgroundColor(Color.BLACK)
+                layout?.alpha = 1f
             }
 
             override fun onPlayerStateChanged(eventTime: AnalyticsListener.EventTime?, playWhenReady: Boolean, state: Int) {
@@ -116,9 +115,9 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         previous videoSource rogue frames from appearing
      */
     fun bind(videoView: TextureView, layout: AspectRatioFrameLayout) {
-        videoView.surfaceTexture?.let { clearSurface(it) }
         player.setVideoTextureView(videoView)
         this.layout = layout
+        layout.alpha = 0f
         layout.background = null
     }
 
