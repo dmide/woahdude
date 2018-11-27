@@ -1,7 +1,6 @@
 package com.reddit.woahdude.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -16,7 +15,9 @@ import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.google.android.material.snackbar.Snackbar
 import com.reddit.woahdude.R
-import com.reddit.woahdude.common.*
+import com.reddit.woahdude.common.GlideApp
+import com.reddit.woahdude.common.ViewModelFactory
+import com.reddit.woahdude.common.WDApplication
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.network.RedditPost
 import com.reddit.woahdude.network.imageLoadRequest
@@ -24,10 +25,9 @@ import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.util.weightChildVisibility
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
 import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
-import java.util.concurrent.TimeUnit
+import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -142,7 +142,7 @@ class ListActivity : AppCompatActivity() {
                             val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
                             (holder as PostViewHolder).showVideoIfNeeded()
                         },
-                        { Log.e(javaClass.name, "error while observing visible items", it) })
+                        { Timber.e(it, "error while observing visible items") })
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

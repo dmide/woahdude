@@ -16,6 +16,7 @@ import com.reddit.woahdude.model.RedditRepository
 import com.reddit.woahdude.network.RedditPost
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -50,7 +51,7 @@ class ListViewModel : BaseViewModel() {
                             loadingVisibility.value = false
                         }
                         is RedditRepository.Status.LoadingFailed -> {
-                            Log.e(javaClass.name, "onRetrievePostListError", status.t)
+                            Timber.e(status.t, "onRetrievePostListError")
                             refreshMessage.value = RefreshMessage(R.string.error_loading, R.string.retry)
                         }
                     }

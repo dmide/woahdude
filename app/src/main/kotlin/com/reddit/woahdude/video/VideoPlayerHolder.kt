@@ -24,6 +24,7 @@ import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.util.EventLogger
 import com.reddit.woahdude.util.clearSurface
 import io.reactivex.subjects.BehaviorSubject
+import timber.log.Timber
 import java.io.IOException
 import java.lang.Exception
 import java.lang.RuntimeException
@@ -88,6 +89,10 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
                                      loadEventInfo: MediaSourceEventListener.LoadEventInfo?,
                                      mediaLoadData: MediaSourceEventListener.MediaLoadData?,
                                      e: IOException?, wasCanceled: Boolean) = onError(e)
+
+            override fun logd(msg: String?) = Timber.d(msg)
+
+            override fun loge(msg: String?, tr: Throwable?) = Timber.e(tr,msg)
 
             private fun onError(error: Exception?) {
                 loadingSubject.onNext(false)

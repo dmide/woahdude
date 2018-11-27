@@ -20,6 +20,7 @@ import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.video.VideoPlayerHolder
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
 import io.reactivex.disposables.CompositeDisposable
+import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -70,7 +71,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                 .onFinish({
                     binding.progress.isVisible = false
                 }, { e ->
-                    Log.e(PostViewHolder::javaClass.name, "onImageError", e)
+                    Timber.e(e, "onImageError")
                     onError()
                 })
                 .into(binding.imageView)
@@ -100,7 +101,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                     binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
                 })
                 add(errorSubject.subscribe { e ->
-                    Log.e(PostViewHolder::javaClass.name, "onPlayerError", e)
+                    Timber.e(e, "onPlayerError")
                     compositeDisposable?.remove(loadingDisposable)
                     onError()
                 })
