@@ -97,7 +97,7 @@ class ListViewModel : BaseViewModel() {
                 return
             }
             repository.isRequestInProgress = true
-            compositeDisposable.add(repository.requestPosts(after = itemAtEnd.name))
+            compositeDisposable.add(repository.requestPosts(after = itemAtEnd.nextPageToken))
         }
 
         override fun onItemAtFrontLoaded(itemAtFront: RedditPost) {

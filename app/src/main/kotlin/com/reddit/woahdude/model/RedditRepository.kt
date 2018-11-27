@@ -14,7 +14,6 @@ class RedditRepository @Inject constructor(val redditApi: RedditApi, val redditD
     var isRequestInProgress = false
 
     val status: PublishSubject<Status> = PublishSubject.create()
-    var nextPageKey: String? = null
 
     fun requestPosts(after: String? = null): Disposable {
         return redditApi.getPosts(after = after)
@@ -25,8 +24,7 @@ class RedditRepository @Inject constructor(val redditApi: RedditApi, val redditD
                 .observeOn(Schedulers.io())
                 .subscribe(
                         { response ->
-                            nextPageKey = response.data.after
-                            insertPostsIntoDB(response)
+                            insertPostsIntoDB(response, response.data.after)
                             isRequestInProgress = false
                         },
                         {
@@ -36,12 +34,13 @@ class RedditRepository @Inject constructor(val redditApi: RedditApi, val redditD
                 )
     }
 
-    fun insertPostsIntoDB(response: PostsResponse) {
+    fun insertPostsIntoDB(response: PostsResponse, nextPageToken: String?) {
         response.data.children.let { posts ->
             redditDb.runInTransaction {
                 val start = redditDb.postDao().getNextIndex()
                 val items = posts.mapIndexed { index, child ->
                     child.data.indexInResponse = start + index
+                    child.data.nextPageToken = nextPageToken
                     child.data
                 }
                 redditDb.postDao().insert(items)
@@ -61,7 +60,7 @@ class RedditRepository @Inject constructor(val redditApi: RedditApi, val redditD
                             redditDb.runInTransaction {
                                 redditDb.postDao().deleteAll()
                             }
-                            insertPostsIntoDB(response)
+                            insertPostsIntoDB(response, response.data.after)
                             isRequestInProgress = false
                         },
                         {

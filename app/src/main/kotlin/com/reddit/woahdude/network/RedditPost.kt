@@ -44,6 +44,7 @@ data class RedditPost(
         val permalink: String?) {
     // to be consistent w/ changing backend order, we need to keep a data like this
     var indexInResponse: Int = -1
+    var nextPageToken: String? = null
 }
 
 data class CrossPost(@Embedded(prefix = "media") val media: Media? = null) {
