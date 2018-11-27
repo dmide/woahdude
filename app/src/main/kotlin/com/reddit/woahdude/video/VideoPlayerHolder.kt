@@ -22,6 +22,7 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultAllocator
 import com.google.android.exoplayer2.util.EventLogger
+import com.reddit.woahdude.util.clearSurface
 import io.reactivex.subjects.BehaviorSubject
 import java.io.IOException
 import java.lang.Exception
@@ -110,6 +111,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         previous videoSource rogue frames from appearing
      */
     fun bind(videoView: TextureView, layout: AspectRatioFrameLayout) {
+        videoView.surfaceTexture?.let { clearSurface(it) }
         player.setVideoTextureView(videoView)
         this.layout = layout
         layout.background = null
