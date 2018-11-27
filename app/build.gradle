@@ -2,6 +2,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 28
@@ -69,7 +71,7 @@ dependencies {
 
     implementation "com.github.bumptech.glide:glide:$glide_version"
     kapt "com.github.bumptech.glide:compiler:$glide_version"
-    implementation ("com.github.bumptech.glide:recyclerview-integration:$glide_version") {
+    implementation("com.github.bumptech.glide:recyclerview-integration:$glide_version") {
         // Excludes the support library because it's already included by Glide.
         transitive = false
     }
@@ -87,5 +89,8 @@ dependencies {
 
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
-//    testImplementation 'junit:junit:4.12'
+    implementation 'com.google.firebase:firebase-core:16.0.5'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.9.6'
+
+    //    testImplementation 'junit:junit:4.12'
 }

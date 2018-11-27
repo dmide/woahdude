@@ -9,7 +9,8 @@ import com.reddit.woahdude.inject.module.ModelModule
 import com.reddit.woahdude.inject.module.NetworkModule
 import timber.log.Timber
 import timber.log.Timber.DebugTree
-
+import com.crashlytics.android.Crashlytics
+import io.fabric.sdk.android.Fabric
 
 class WDApplication : Application() {
 
@@ -24,6 +25,7 @@ class WDApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        if (BuildConfig.DEBUG) Timber.plant(DebugTree())
+        Fabric.with(this, Crashlytics())
+        Timber.plant(if (BuildConfig.DEBUG) DebugTree() else ReleaseTree())
     }
 }
