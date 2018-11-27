@@ -69,10 +69,13 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
         binding.progress.isVisible = true
         binding.imageView.background = null
         redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
-                .onFinish {
+                .onFinish({
                     binding.progress.isVisible = false
                     binding.imageView.background = ColorDrawable(Color.BLACK)
-                }
+                }, { e ->
+                    Log.e(PostViewHolder::javaClass.name, "onImageError", e)
+                    onError()
+                })
                 .into(binding.imageView)
     }
 
@@ -90,9 +93,10 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             bind(binding.videoView)
 
             compositeDisposable = CompositeDisposable().apply {
-                add(loadingSubject.map { if (it) View.VISIBLE else View.GONE }.subscribe {
+                val loadingDisposable = loadingSubject.map { if (it) View.VISIBLE else View.GONE }.subscribe {
                     binding.progress.visibility = it
-                })
+                }
+                add(loadingDisposable)
                 add(sizeSubject.subscribe { (w, h) ->
                     val dimensions = ExternalResource.getAdaptedMediaDimensions(w, h)
                     binding.videoViewContainer.layoutParams.height = dimensions.height
@@ -100,7 +104,8 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                 })
                 add(errorSubject.subscribe { e ->
                     Log.e(PostViewHolder::javaClass.name, "onPlayerError", e)
-                    binding.externalLinkButton.isVisible = true
+                    compositeDisposable?.remove(loadingDisposable)
+                    onError()
                 })
             }
         }
@@ -134,5 +139,12 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.url))
             (binding.root.context as Activity).startActivity(browserIntent)
         }
+    }
+
+    private fun onError() {
+        binding.progress.isVisible = false
+        binding.imageView.isVisible = false
+        binding.videoViewContainer.isVisible = false
+        binding.externalLinkButton.isVisible = true
     }
 }

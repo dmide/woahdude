@@ -52,15 +52,15 @@ fun RecyclerView.getChildVisiblePercent(child: View?): Int {
     return percent
 }
 
-fun GlideRequest<Drawable>.onFinish(callback: () -> Unit) : GlideRequest<Drawable> {
+fun GlideRequest<Drawable>.onFinish(onSuccess: () -> Unit, onError: (Exception?) -> Unit) : GlideRequest<Drawable> {
     return listener(object : RequestListener<Drawable> {
         override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
-            callback.invoke()
+            onError.invoke(e)
             return false
         }
 
         override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: com.bumptech.glide.load.DataSource?, isFirstResource: Boolean): Boolean {
-            callback.invoke()
+            onSuccess.invoke()
             return false
         }
     })
