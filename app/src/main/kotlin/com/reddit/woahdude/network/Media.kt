@@ -10,6 +10,10 @@ class Media(
         @SerializedName("oembed")
         val embedded: Oembed?)
 
+class Preview(
+        @Embedded(prefix = "media_video")
+        @SerializedName("reddit_video_preview")
+        val reddit_video: RedditVideo?)
 
 class RedditVideo(
         @SerializedName("fallback_url")

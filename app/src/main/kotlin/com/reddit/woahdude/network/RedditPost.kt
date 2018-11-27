@@ -31,13 +31,11 @@ data class RedditPost(
         val created: Long,
         @Embedded(prefix = "media")
         val media: Media?,
+        @Embedded(prefix = "preview")
+        val preview: Preview?,
         @SerializedName("crosspost_parent_list")
         val crosspostParents: ArrayList<CrossPost>?,
         val thumbnail: String?,
-        @SerializedName("thumbnail_height")
-        val thumbnailHeight: Int?,
-        @SerializedName("thumbnail_width")
-        val thumbnailWidth: Int?,
         @SerializedName("link_flair_text")
         val type: String?,
         val url: String?,

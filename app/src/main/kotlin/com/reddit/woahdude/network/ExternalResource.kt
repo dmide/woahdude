@@ -88,8 +88,8 @@ sealed class ExternalResource {
         val url = redditPost.url!! // always non-null at this point
 
         override fun imageResource(): Any? {
-            val height = redditPost.thumbnailHeight
-            val width = redditPost.thumbnailWidth
+            val height = redditPost.preview?.reddit_video?.height
+            val width = redditPost.preview?.reddit_video?.width
             if (height != null && width != null) { //better to get blank preview but with correct dimensions
                 val dimensions = getAdaptedMediaDimensions(width, height)
                 val drawable = WrappedDrawable(ColorDrawable(Color.TRANSPARENT))
