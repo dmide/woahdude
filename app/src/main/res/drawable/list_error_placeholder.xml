@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <size android:height="@dimen/placeholder_height"/>
+            <solid android:color="@android:color/transparent"/>
+        </shape>
+    </item>
+    <item android:drawable="@drawable/ic_block" android:gravity="center"/>
+</layer-list>
+

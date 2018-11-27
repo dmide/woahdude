@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.util.Log
 import android.view.View
@@ -64,14 +62,13 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
     private fun loadImage(redditPost: RedditPost) {
         val imageResource = redditPost.getImageResource()
+        binding.placeholder.setImageResource(R.drawable.list_placeholder)
         binding.imageView.isVisible = imageResource != null
 
         binding.progress.isVisible = true
-        binding.imageView.background = null
         redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
                 .onFinish({
                     binding.progress.isVisible = false
-                    binding.imageView.background = ColorDrawable(Color.BLACK)
                 }, { e ->
                     Log.e(PostViewHolder::javaClass.name, "onImageError", e)
                     onError()
@@ -142,6 +139,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     }
 
     private fun onError() {
+        binding.placeholder.setImageResource(R.drawable.list_error_placeholder)
         binding.progress.isVisible = false
         binding.imageView.isVisible = false
         binding.videoViewContainer.isVisible = false
