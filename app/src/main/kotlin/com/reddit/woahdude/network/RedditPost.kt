@@ -79,3 +79,7 @@ fun RedditPost.getPostType(): String? {
 fun RedditPost.getVideoUrl(): String? {
     return ExternalResource.of(this).videoUrl()
 }
+
+fun RedditPost.shouldShowExternalResButton(): Boolean {
+    return ExternalResource.of(this).shouldShowExternalResButton()
+}

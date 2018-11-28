@@ -41,6 +41,8 @@ sealed class ExternalResource {
 
     abstract fun typeString(): String?
 
+    open fun shouldShowExternalResButton() = false
+
     class Default(private val type: String?, private val url: String?) : ExternalResource() {
         private val imageExtensions = arrayOf(".jpg", ".png", ".jpeg", ".gif")
         private val videoExtensions = arrayOf(".mp4", ".webm")
@@ -75,12 +77,31 @@ sealed class ExternalResource {
     }
 
     class Youtube(private val url: String) : ExternalResource() {
-        override fun imageResource(): String? = null
+        companion object {
+            private val fullUrlRegex = "youtube\\.com/watch\\?v=([^&]*)&*".toRegex()
+            private val shortUrlRegex = "youtu\\.be/([^&]*)&*".toRegex()
+        }
+
+        override fun imageResource(): String? {
+            return "https://img.youtube.com/vi/${extractHash()}/0.jpg"
+        }
 
         override fun videoUrl(): String? = null
 
         override fun typeString(): String? {
             return "youtube"
+        }
+
+        override fun shouldShowExternalResButton() = true
+
+        private fun extractHash() : String? {
+            if (url.contains("https://www.youtube.com")) {
+                return fullUrlRegex.find(url)?.groups?.get(1)?.value
+            }
+            if (url.contains("https://youtu.be/")){
+                return shortUrlRegex.find(url)?.groups?.get(1)?.value
+            }
+            return ""
         }
     }
 

@@ -57,7 +57,9 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             loadImage(redditPost)
             loadVideo(redditPost)
 
-            binding.externalLinkButton.isVisible = redditPost.getVideoUrl() == null && redditPost.getImageResource() == null
+            val shouldShowExternalResButton = redditPost.shouldShowExternalResButton() ||
+                    (redditPost.getVideoUrl() == null && redditPost.getImageResource() == null)
+            binding.externalLinkButton.isVisible = shouldShowExternalResButton
         }
 
         binding.type.setOnClickListener {
