@@ -70,6 +70,16 @@ class ListActivity : AppCompatActivity() {
                 }
             })
         }
+
+        binding.fab.apply {
+            setOnClickListener {
+                binding.postList.scrollToPosition(0)
+                hide(false)
+            }
+            attachToRecyclerView(binding.postList)
+            hide(false)
+        }
+
         binding.setLifecycleOwner(this)
         binding.viewModel = viewModel
 
