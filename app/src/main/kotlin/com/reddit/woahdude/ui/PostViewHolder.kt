@@ -1,11 +1,12 @@
 package com.reddit.woahdude.ui
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.net.Uri
-import android.util.Log
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.lifecycle.LiveData
@@ -17,6 +18,7 @@ import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.network.*
 import com.reddit.woahdude.util.Const
 import com.reddit.woahdude.util.onFinish
+import com.reddit.woahdude.util.toast
 import com.reddit.woahdude.video.VideoPlayerHolder
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
 import io.reactivex.disposables.CompositeDisposable
@@ -56,6 +58,13 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             loadVideo(redditPost)
 
             binding.externalLinkButton.isVisible = redditPost.getVideoUrl() == null && redditPost.getImageResource() == null
+        }
+
+        binding.type.setOnClickListener {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("woahdude link", redditPost?.permalinkUrl())
+            clipboard.primaryClip = clip
+            context.toast(resources.getText(R.string.link_copied_to_clipboard))
         }
 
         binding.viewHolder = this
@@ -127,7 +136,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
     fun onCommentsClick() {
         redditPost?.let {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://reddit.com" + it.permalink))
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it.permalinkUrl()))
             (binding.root.context as Activity).startActivity(browserIntent)
         }
     }
