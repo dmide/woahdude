@@ -43,6 +43,10 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         private set
     var loadingSubject = BehaviorSubject.create<Boolean>()
         private set
+    var hasSoundSubject = BehaviorSubject.create<Boolean>()
+        private set
+    var volumeSubject = BehaviorSubject.create<Boolean>()
+        private set
 
     init {
         extractorsFactory = DefaultExtractorsFactory()
@@ -58,6 +62,7 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
 
         player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl)
         player.repeatMode = Player.REPEAT_MODE_ALL
+        player.volume = 0f
         player.addAnalyticsListener(object : EventLogger(null) {
             override fun onVideoSizeChanged(eventTime: AnalyticsListener.EventTime, width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
                 super.onVideoSizeChanged(eventTime, width, height, unappliedRotationDegrees, pixelWidthHeightRatio)
@@ -78,6 +83,10 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
                     Player.STATE_READY -> loadingSubject.onNext(false)
                     Player.STATE_IDLE, Player.STATE_BUFFERING -> loadingSubject.onNext(true)
                 }
+            }
+
+            override fun onAudioSessionId(eventTime: AnalyticsListener.EventTime?, audioSessionId: Int) {
+                hasSoundSubject.onNext(true)
             }
 
             override fun onDrmSessionManagerError(eventTime: AnalyticsListener.EventTime?, e: Exception?) = onError(e)
@@ -110,6 +119,16 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
 
     fun isPlaying() = player.playWhenReady
 
+    fun toggleVolume() {
+        if (player.volume == 1f) {
+            volumeSubject.onNext(false)
+            player.volume =  0f
+        } else {
+            volumeSubject.onNext(true)
+            player.volume =  1f
+        }
+    }
+
     /*
         bind() should be called after prepareVideoSource() to prevent
         previous videoSource rogue frames from appearing
@@ -126,12 +145,15 @@ open class VideoPlayerHolder @Inject constructor(val context: Context,
         currentVideoPath = null
         loadingSubject.onNext(false)
         player.setVideoTextureView(null)
+        player.volume = 0f
         layout = null
 
-        listOf(loadingSubject, sizeSubject, errorSubject).forEach { it.onComplete() }
+        listOf(loadingSubject, sizeSubject, errorSubject, hasSoundSubject, volumeSubject).forEach { it.onComplete() }
         loadingSubject = BehaviorSubject.create()
         sizeSubject = BehaviorSubject.create()
         errorSubject = BehaviorSubject.create()
+        hasSoundSubject = BehaviorSubject.create()
+        volumeSubject = BehaviorSubject.create()
     }
 
     fun prepareVideoSource(videoPath: String) {
