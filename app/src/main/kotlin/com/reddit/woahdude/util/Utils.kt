@@ -1,19 +1,16 @@
 package com.reddit.woahdude.util
 
+import android.content.Context
 import android.content.res.Resources
 import android.graphics.Rect
-import android.graphics.SurfaceTexture
 import android.graphics.drawable.Drawable
-import android.opengl.GLES20
 import android.view.View
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.reddit.woahdude.common.GlideRequest
-import javax.microedition.khronos.egl.EGL10
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.egl.EGLContext
 
 
 val Int.dp: Int
@@ -71,3 +68,6 @@ fun GlideRequest<Drawable>.onFinish(onSuccess: () -> Unit, onError: (Exception?)
         }
     })
 }
+
+fun Context.toast(text: CharSequence, long: Boolean = false): Toast =
+        Toast.makeText(this.applicationContext, text, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).apply { show() }
