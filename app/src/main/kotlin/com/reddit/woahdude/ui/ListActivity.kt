@@ -22,6 +22,7 @@ import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.network.RedditPost
 import com.reddit.woahdude.network.imageLoadRequest
 import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.util.bindSharedPreference
 import com.reddit.woahdude.util.weightChildVisibility
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
 import io.reactivex.Observable
@@ -31,6 +32,8 @@ import timber.log.Timber
 import javax.inject.Inject
 
 
+private const val LAST_VIEWED_POSITION = "LAST_VIEWED_POSITION"
+
 class ListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityListBinding
     private lateinit var viewModel: ListViewModel
@@ -38,6 +41,8 @@ class ListActivity : AppCompatActivity() {
     private val listAdapter = ListAdapter()
     private val visibleStatePublishSubject = PublishSubject.create<VisibleState>()
     private var snackbar: Snackbar? = null
+    private var lastViewedPosition by bindSharedPreference(this, LAST_VIEWED_POSITION, 0)
+    private var currentPosition: Int = 0
 
     @Inject
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
@@ -88,6 +93,10 @@ class ListActivity : AppCompatActivity() {
         })
         viewModel.posts.observe(this, Observer { posts ->
             listAdapter.submitList(posts)
+            if (lastViewedPosition != -1) {
+                binding.postList.scrollToPosition(lastViewedPosition)
+                lastViewedPosition = -1
+            }
         })
     }
 
@@ -104,6 +113,9 @@ class ListActivity : AppCompatActivity() {
     override fun onDestroy() {
         playerHoldersPool.release()
         visibleViewsDisposable.dispose()
+        if (isFinishing) {
+            lastViewedPosition = currentPosition
+        }
         super.onDestroy()
     }
 
@@ -146,6 +158,7 @@ class ListActivity : AppCompatActivity() {
                     return@switchMap if (view != null) Observable.just(view) else Observable.empty()
                 }
                 .distinctUntilChanged()
+                .doOnNext { currentPosition = binding.postList.getChildAdapterPosition(it) }
                 .subscribe(
                         { mostVisibleChild ->
                             playerHoldersPool.pauseCurrent() // pause playback when the focus changes
