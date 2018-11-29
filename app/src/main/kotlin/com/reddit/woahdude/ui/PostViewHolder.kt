@@ -70,6 +70,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                     binding.progress.isVisible = false
                 }, { e ->
                     Timber.e(e, "onImageError")
+                    binding.imageView.isVisible = false
                     onError()
                 })
                 .into(binding.imageView)
@@ -97,6 +98,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                 add(errorSubject.subscribe { e ->
                     Timber.e(e, "onPlayerError")
                     compositeDisposable?.remove(loadingDisposable)
+                    binding.videoViewContainer.isVisible = false
                     onError()
                 })
                 add(hasSoundSubject.startWith(false).subscribe { hasSound ->
@@ -167,7 +169,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     private fun onError() {
         binding.apply {
             placeholder.setImageResource(R.drawable.list_error_placeholder)
-            listOf(progress, imageView, videoViewContainer).forEach { it.isVisible = false }
+            progress.isVisible = false
             externalLinkButton.isVisible = true
         }
     }
