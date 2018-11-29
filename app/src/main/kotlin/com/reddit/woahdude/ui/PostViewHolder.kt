@@ -90,6 +90,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
     private fun loadVideo(redditPost: RedditPost) {
         binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
+        binding.videoViewContainer.setOnClickListener(null)
         binding.sound.setImageResource(R.drawable.ic_volume_off)
         binding.sound.isVisible = false
 
@@ -127,7 +128,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             }
         }
 
-        binding.sound.setOnClickListener { videoPlayerHolder?.toggleVolume() }
+        binding.videoViewContainer.setOnClickListener { videoPlayerHolder?.toggleVolume() }
     }
 
     fun release() {
