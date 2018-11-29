@@ -81,5 +81,6 @@ fun RedditPost.getVideoUrl(): String? {
 }
 
 fun RedditPost.shouldShowExternalResButton(): Boolean {
-    return ExternalResource.of(this).shouldShowExternalResButton()
+    val res = ExternalResource.of(this)
+    return res.shouldShowExternalResButton() || (res.videoUrl() == null && res.imageResource() == null)
 }

@@ -7,7 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.net.Uri
-import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import androidx.core.view.isVisible
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -56,29 +57,15 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
             loadImage(redditPost)
             loadVideo(redditPost)
-
-            val shouldShowExternalResButton = redditPost.shouldShowExternalResButton() ||
-                    (redditPost.getVideoUrl() == null && redditPost.getImageResource() == null)
-            binding.externalLinkButton.isVisible = shouldShowExternalResButton
-        }
-
-        binding.type.setOnClickListener {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("woahdude link", redditPost?.permalinkUrl())
-            clipboard.primaryClip = clip
-            context.toast(resources.getText(R.string.link_copied_to_clipboard))
         }
 
         binding.viewHolder = this
     }
 
     private fun loadImage(redditPost: RedditPost) {
-        val imageResource = redditPost.getImageResource()
         binding.placeholder.setImageResource(R.drawable.list_placeholder)
-        binding.imageView.isVisible = imageResource != null
-
         binding.progress.isVisible = true
-        redditPost.imageLoadRequest(GlideApp.with(context), imageResource)
+        redditPost.imageLoadRequest(GlideApp.with(context), redditPost.getImageResource())
                 .onFinish({
                     binding.progress.isVisible = false
                 }, { e ->
@@ -90,22 +77,15 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
     private fun loadVideo(redditPost: RedditPost) {
         binding.videoViewContainer.layoutParams.height = 0 // reset height after previous video
-        binding.videoViewContainer.setOnClickListener(null)
-        binding.sound.setImageResource(R.drawable.ic_volume_off)
-        binding.sound.isVisible = false
 
-        val videoUrl = redditPost.getVideoUrl()
-        binding.videoViewContainer.isVisible = videoUrl != null
-        if (videoUrl == null) {
-            return
-        }
+        val videoUrl = redditPost.getVideoUrl() ?: return
 
         videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
             prepareVideoSource(videoUrl)
             bind(binding.videoView, binding.videoViewContainer)
 
             compositeDisposable = CompositeDisposable().apply {
-                val loadingDisposable = loadingSubject.map { if (it) View.VISIBLE else View.GONE }.subscribe {
+                val loadingDisposable = loadingSubject.map { if (it) VISIBLE else GONE }.subscribe {
                     binding.progress.visibility = it
                 }
                 add(loadingDisposable)
@@ -119,16 +99,14 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                     compositeDisposable?.remove(loadingDisposable)
                     onError()
                 })
-                add(hasSoundSubject.subscribe { hasSound ->
-                    if (hasSound) binding.sound.isVisible = true
+                add(hasSoundSubject.startWith(false).subscribe { hasSound ->
+                    binding.sound.visibility = if (hasSound) VISIBLE else GONE
                 })
-                add(volumeSubject.subscribe { isEnabled ->
+                add(volumeSubject.startWith(false).subscribe { isEnabled ->
                     binding.sound.setImageResource(if (isEnabled) R.drawable.ic_volume_on else R.drawable.ic_volume_off)
                 })
             }
         }
-
-        binding.videoViewContainer.setOnClickListener { videoPlayerHolder?.toggleVolume() }
     }
 
     fun release() {
@@ -161,11 +139,36 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
         }
     }
 
+    fun onTypeClick() {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("woahdude link", redditPost?.permalinkUrl())
+        clipboard.primaryClip = clip
+        context.toast(resources.getText(R.string.link_copied_to_clipboard))
+    }
+
+    fun onVideoClick() {
+        if (redditPost?.getVideoUrl() != null) {
+            videoPlayerHolder?.toggleVolume()
+        }
+    }
+
+    fun externalResButtonVisibility(): Int {
+        return if (redditPost?.shouldShowExternalResButton() == true) VISIBLE else GONE
+    }
+
+    fun imageViewVisibility(): Int {
+        return if (redditPost?.getImageResource() != null) VISIBLE else GONE
+    }
+
+    fun videoViewVisibility(): Int {
+        return if (redditPost?.getVideoUrl() != null) VISIBLE else GONE
+    }
+
     private fun onError() {
-        binding.placeholder.setImageResource(R.drawable.list_error_placeholder)
-        binding.progress.isVisible = false
-        binding.imageView.isVisible = false
-        binding.videoViewContainer.isVisible = false
-        binding.externalLinkButton.isVisible = true
+        binding.apply {
+            placeholder.setImageResource(R.drawable.list_error_placeholder)
+            listOf(progress, imageView, videoViewContainer).forEach { it.isVisible = false }
+            externalLinkButton.isVisible = true
+        }
     }
 }
