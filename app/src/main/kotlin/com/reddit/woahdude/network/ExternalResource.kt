@@ -79,6 +79,7 @@ sealed class ExternalResource {
     class Youtube(private val url: String) : ExternalResource() {
         companion object {
             private val fullUrlRegex = "youtube\\.com/watch\\?v=([^&]*)&*".toRegex()
+            private val attributionUrlRegex = "v%3D([^&%]*)[%&]*".toRegex()
             private val shortUrlRegex = "youtu\\.be/([^&]*)&*".toRegex()
         }
 
@@ -95,13 +96,14 @@ sealed class ExternalResource {
         override fun shouldShowExternalResButton() = true
 
         private fun extractHash() : String? {
-            if (url.contains("https://www.youtube.com")) {
-                return fullUrlRegex.find(url)?.groups?.get(1)?.value
+            val regex = when {
+                url.contains("attribution_link") -> attributionUrlRegex
+                url.contains("https://www.youtube.com") -> fullUrlRegex
+                url.contains("https://youtu.be/") -> shortUrlRegex
+                else -> null
             }
-            if (url.contains("https://youtu.be/")){
-                return shortUrlRegex.find(url)?.groups?.get(1)?.value
-            }
-            return ""
+
+            return regex?.find(url)?.groups?.get(1)?.value ?: ""
         }
     }
 
