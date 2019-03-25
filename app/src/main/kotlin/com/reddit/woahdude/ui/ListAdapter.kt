@@ -2,14 +2,13 @@ package com.reddit.woahdude.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.WDApplication
 import com.reddit.woahdude.databinding.ListItemBinding
-import com.reddit.woahdude.network.RedditPost
+import com.reddit.woahdude.model.RedditPost
 
 class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCallback()) {
 

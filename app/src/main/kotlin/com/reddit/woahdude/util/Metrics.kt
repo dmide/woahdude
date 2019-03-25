@@ -7,7 +7,7 @@ import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.WindowManager
 
-object Const {
+object Metrics {
     var deviceWidth: Int = 0
         private set
     var deviceHeight: Int = 0

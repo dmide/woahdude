@@ -1,5 +1,6 @@
-package com.reddit.woahdude.network
+package com.reddit.woahdude.model.network
 
+import com.reddit.woahdude.model.RedditPost
 import io.reactivex.Observable
 import retrofit2.http.GET
 import retrofit2.http.Query

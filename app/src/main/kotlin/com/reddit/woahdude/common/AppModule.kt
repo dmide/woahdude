@@ -1,4 +1,4 @@
-package com.reddit.woahdude.inject.module
+package com.reddit.woahdude.common
 
 import android.content.Context
 import android.content.SharedPreferences

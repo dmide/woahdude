@@ -1,8 +1,7 @@
-package com.reddit.woahdude.inject.component
+package com.reddit.woahdude.common
 
-import com.reddit.woahdude.inject.module.AppModule
-import com.reddit.woahdude.inject.module.ModelModule
-import com.reddit.woahdude.inject.module.NetworkModule
+import com.reddit.woahdude.model.db.DBModule
+import com.reddit.woahdude.model.network.NetworkModule
 import com.reddit.woahdude.model.RedditRepository
 import com.reddit.woahdude.ui.ListActivity
 import com.reddit.woahdude.ui.ListViewModel
@@ -11,7 +10,7 @@ import dagger.Component
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [AppModule::class, NetworkModule::class, ModelModule::class])
+@Component(modules = [AppModule::class, NetworkModule::class, DBModule::class])
 interface AppComponent {
 
     fun inject(listActivity: ListActivity)
@@ -28,7 +27,7 @@ interface AppComponent {
 
         fun appModule(appModule: AppModule): Builder
 
-        fun dbModule(dbModule: ModelModule): Builder
+        fun dbModule(dbModule: DBModule): Builder
 
         fun networkModule(networkModule: NetworkModule): Builder
     }

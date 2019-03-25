@@ -1,6 +1,5 @@
-package com.reddit.woahdude.inject.module
+package com.reddit.woahdude.model.network
 
-import com.reddit.woahdude.network.RedditApi
 import dagger.Module
 import dagger.Provides
 import dagger.Reusable

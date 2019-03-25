@@ -1,4 +1,4 @@
-package com.reddit.woahdude.common
+package com.reddit.woahdude.ui.components
 
 import android.content.Context
 import android.graphics.Bitmap

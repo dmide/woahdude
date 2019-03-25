@@ -1,12 +1,12 @@
-package com.reddit.woahdude.model
+package com.reddit.woahdude.model.db
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.reddit.woahdude.network.CrossPost
-import com.reddit.woahdude.network.RedditPost
+import com.reddit.woahdude.model.CrossPost
+import com.reddit.woahdude.model.RedditPost
 
 @Database(
         entities = [RedditPost::class],
@@ -14,7 +14,7 @@ import com.reddit.woahdude.network.RedditPost
         exportSchema = false
 )
 @TypeConverters(CrossPost::class)
-abstract class RedditDb : RoomDatabase() {
+internal abstract class RedditDb : RoomDatabase() {
 
     companion object {
         fun create(context: Context): RedditDb {
@@ -25,5 +25,5 @@ abstract class RedditDb : RoomDatabase() {
         }
     }
 
-    abstract fun postDao(): RedditDao
+    internal abstract fun postDao(): RedditDao
 }

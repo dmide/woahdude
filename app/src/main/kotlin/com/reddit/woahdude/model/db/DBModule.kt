@@ -1,10 +1,8 @@
-package com.reddit.woahdude.inject.module
+package com.reddit.woahdude.model.db
 
 import android.content.Context
 import androidx.room.Room
 import com.google.android.exoplayer2.upstream.DataSource
-import com.reddit.woahdude.model.RedditDao
-import com.reddit.woahdude.model.RedditDb
 import com.reddit.woahdude.util.megabytes
 import com.reddit.woahdude.video.CacheDataSourceFactory
 import dagger.Module
@@ -13,20 +11,13 @@ import dagger.Reusable
 
 @Module
 @Suppress("unused")
-object ModelModule {
+object DBModule {
 
     @Provides
     @Reusable
     @JvmStatic
     internal fun provideRedditDb(context: Context): RedditDb {
         return Room.databaseBuilder(context, RedditDb::class.java, "woahdude.db").build()
-    }
-
-    @Provides
-    @Reusable
-    @JvmStatic
-    internal fun provideRedditDao(redditDb: RedditDb): RedditDao {
-        return redditDb.postDao()
     }
 
     @Provides

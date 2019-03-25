@@ -1,7 +1,7 @@
-package com.reddit.woahdude.common
+package com.reddit.woahdude.ui.common
 
 import androidx.lifecycle.ViewModel
-import com.reddit.woahdude.inject.component.AppComponent
+import com.reddit.woahdude.common.AppComponent
 import com.reddit.woahdude.ui.ListViewModel
 
 abstract class BaseViewModel() : ViewModel() {

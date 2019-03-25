@@ -16,8 +16,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
-import com.reddit.woahdude.network.*
-import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.model.*
+import com.reddit.woahdude.util.Metrics
 import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.util.toast
 import com.reddit.woahdude.video.VideoPlayerHolder
@@ -35,7 +35,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     @Inject
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
-    val maxImageHeight = Const.optimalContentHeight
+    val maxImageHeight = Metrics.optimalContentHeight
     val postTitle: LiveData<String> = MutableLiveData()
     val postType: LiveData<String> = MutableLiveData()
     val postComments: LiveData<String> = MutableLiveData()
@@ -91,7 +91,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                 }
                 add(loadingDisposable)
                 add(sizeSubject.subscribe { (w, h) ->
-                    val dimensions = ExternalResource.getAdaptedMediaDimensions(w, h)
+                    val dimensions = MediaProvider.getAdaptedMediaDimensions(w, h)
                     binding.videoViewContainer.layoutParams.height = dimensions.height
                     binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
                 })

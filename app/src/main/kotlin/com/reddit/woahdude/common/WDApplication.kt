@@ -1,16 +1,13 @@
 package com.reddit.woahdude.common
 
 import android.app.Application
+import com.crashlytics.android.Crashlytics
 import com.reddit.woahdude.BuildConfig
-import com.reddit.woahdude.inject.component.AppComponent
-import com.reddit.woahdude.inject.component.DaggerAppComponent
-import com.reddit.woahdude.inject.module.AppModule
-import com.reddit.woahdude.inject.module.ModelModule
-import com.reddit.woahdude.inject.module.NetworkModule
+import com.reddit.woahdude.model.db.DBModule
+import com.reddit.woahdude.model.network.NetworkModule
+import io.fabric.sdk.android.Fabric
 import timber.log.Timber
 import timber.log.Timber.DebugTree
-import com.crashlytics.android.Crashlytics
-import io.fabric.sdk.android.Fabric
 
 class WDApplication : Application() {
 
@@ -18,7 +15,7 @@ class WDApplication : Application() {
         DaggerAppComponent
                 .builder()
                 .appModule(AppModule(this))
-                .dbModule(ModelModule)
+                .dbModule(DBModule)
                 .networkModule(NetworkModule)
                 .build()
     }

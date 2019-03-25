@@ -1,8 +1,6 @@
 package com.reddit.woahdude.ui
 
 import android.content.SharedPreferences
-import android.util.Log
-import android.view.View
 import androidx.annotation.StringRes
 import androidx.core.content.edit
 import androidx.lifecycle.LiveData
@@ -10,21 +8,23 @@ import androidx.lifecycle.MutableLiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.reddit.woahdude.R
-import com.reddit.woahdude.common.BaseViewModel
-import com.reddit.woahdude.model.RedditDao
+import com.reddit.woahdude.ui.common.BaseViewModel
 import com.reddit.woahdude.model.RedditRepository
-import com.reddit.woahdude.network.RedditPost
+import com.reddit.woahdude.model.RedditPost
+import com.reddit.woahdude.util.plusAssign
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-const val LAST_REFRESH_TIME = "LAST_REFRESH_TIME"
+private const val LAST_REFRESH_TIME = "LAST_REFRESH_TIME"
+private val pagingConfig: PagedList.Config = PagedList.Config.Builder()
+        .setPageSize(30)
+        .setEnablePlaceholders(true)
+        .build()
 
 class ListViewModel : BaseViewModel() {
-    @Inject
-    lateinit var redditDao: RedditDao
     @Inject
     lateinit var repository: RedditRepository
     @Inject
@@ -32,14 +32,18 @@ class ListViewModel : BaseViewModel() {
 
     val loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
     val refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
-    val posts: LiveData<PagedList<RedditPost>> by lazy { initializedPagedListLiveData() }
+    val posts: LiveData<PagedList<RedditPost>> by lazy {
+        LivePagedListBuilder<Int, RedditPost>(repository.getCachedPosts(), pagingConfig)
+                .setBoundaryCallback(RedditBoundaryCallback())
+                .build()
+    }
 
     private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     override fun onCreated() {
         loadingVisibility.value = false
 
-        val disposable = repository.status
+        compositeDisposable += repository.status
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { status ->
                     when (status) {
@@ -56,7 +60,6 @@ class ListViewModel : BaseViewModel() {
                         }
                     }
                 }
-        compositeDisposable.add(disposable)
     }
 
     override fun onCleared() {
@@ -65,40 +68,23 @@ class ListViewModel : BaseViewModel() {
     }
 
     fun refresh() {
-        compositeDisposable.add(repository.refresh())
-    }
-
-    private fun initializedPagedListLiveData(): LiveData<PagedList<RedditPost>> {
-        val config = PagedList.Config.Builder()
-                .setPageSize(30)
-                .setEnablePlaceholders(true)
-                .build()
-
-        val livePageListBuilder = LivePagedListBuilder<Int, RedditPost>(redditDao.posts(), config)
-        livePageListBuilder.setBoundaryCallback(RedditBoundaryCallback())
-
-        return livePageListBuilder.build()
+        compositeDisposable += repository.refreshPosts()
     }
 
     inner class RedditBoundaryCallback : PagedList.BoundaryCallback<RedditPost>() {
         override fun onZeroItemsLoaded() {
             super.onZeroItemsLoaded()
-            if (repository.isRequestInProgress) {
-                return
-            }
-            repository.isRequestInProgress = true
-            compositeDisposable.add(repository.requestPosts())
-            
+            if (repository.isRequestInProgress) return
+
+            compositeDisposable += repository.requestPosts()
             sharedPreferences.edit { putLong(LAST_REFRESH_TIME, System.currentTimeMillis()) }
         }
 
         override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
             super.onItemAtEndLoaded(itemAtEnd)
-            if (repository.isRequestInProgress) {
-                return
-            }
-            repository.isRequestInProgress = true
-            compositeDisposable.add(repository.requestPosts(after = itemAtEnd.nextPageToken))
+            if (repository.isRequestInProgress) return
+
+            compositeDisposable += repository.requestPosts(after = itemAtEnd.nextPageToken)
         }
 
         override fun onItemAtFrontLoaded(itemAtFront: RedditPost) {
@@ -112,6 +98,6 @@ class ListViewModel : BaseViewModel() {
             }
         }
     }
-    
+
     data class RefreshMessage(@StringRes val text: Int, @StringRes val actionText: Int)
 }

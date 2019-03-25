@@ -1,14 +1,14 @@
-package com.reddit.woahdude.model
+package com.reddit.woahdude.model.db
 
 import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.reddit.woahdude.network.RedditPost
+import com.reddit.woahdude.model.RedditPost
 
 @Dao
-interface RedditDao {
+internal interface RedditDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(redditPosts: List<RedditPost>)

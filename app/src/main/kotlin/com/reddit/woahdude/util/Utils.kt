@@ -11,6 +11,8 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.reddit.woahdude.common.GlideRequest
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 
 
 val Int.dp: Int
@@ -67,6 +69,10 @@ fun GlideRequest<Drawable>.onFinish(onSuccess: () -> Unit, onError: (Exception?)
             return false
         }
     })
+}
+
+operator fun CompositeDisposable.plusAssign(disposable: Disposable) {
+    add(disposable)
 }
 
 fun Context.toast(text: CharSequence, long: Boolean = false): Toast =

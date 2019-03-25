@@ -1,4 +1,4 @@
-package com.reddit.woahdude.network
+package com.reddit.woahdude.model
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -10,7 +10,7 @@ import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
-import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.util.Metrics
 import com.reddit.woahdude.common.GlideRequest
 import com.reddit.woahdude.common.GlideRequests
 
@@ -65,22 +65,44 @@ data class CrossPost(@Embedded(prefix = "media") val media: Media? = null) {
 fun RedditPost.imageLoadRequest(glide: GlideRequests, imageResource: Any? = getImageResource()): GlideRequest<Drawable> {
     return glide.load(imageResource)
             .placeholder(ColorDrawable(Color.TRANSPARENT))
-            .override(Const.deviceWidth)
+            .override(Metrics.deviceWidth)
 }
 
 fun RedditPost.getImageResource(): Any? {
-    return ExternalResource.of(this).imageResource()
+    return MediaProvider.of(this).imageResource()
 }
 
 fun RedditPost.getPostType(): String? {
-    return ExternalResource.of(this).typeString()
+    return MediaProvider.of(this).typeString()
 }
 
 fun RedditPost.getVideoUrl(): String? {
-    return ExternalResource.of(this).videoUrl()
+    return MediaProvider.of(this).videoUrl()
 }
 
 fun RedditPost.shouldShowExternalResButton(): Boolean {
-    val res = ExternalResource.of(this)
+    val res = MediaProvider.of(this)
     return res.shouldShowExternalResButton() || (res.videoUrl() == null && res.imageResource() == null)
 }
+
+class Media(
+        @Embedded(prefix = "media_video")
+        val reddit_video: Video?,
+        @Embedded(prefix = "oembed")
+        @SerializedName("oembed")
+        val embedded: Oembed?)
+
+class Preview(
+        @Embedded(prefix = "media_video")
+        @SerializedName("reddit_video_preview")
+        val reddit_video: Video?)
+
+class Video(
+        @SerializedName("fallback_url")
+        val fallback_url: String?,
+        val height: Int?,
+        val width: Int?)
+
+class Oembed(
+        @SerializedName("thumbnail_url")
+        val thumbnailUrl: String?)

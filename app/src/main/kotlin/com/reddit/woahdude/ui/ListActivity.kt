@@ -16,12 +16,12 @@ import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.google.android.material.snackbar.Snackbar
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
-import com.reddit.woahdude.common.ViewModelFactory
+import com.reddit.woahdude.ui.common.ViewModelFactory
 import com.reddit.woahdude.common.WDApplication
 import com.reddit.woahdude.databinding.ActivityListBinding
-import com.reddit.woahdude.network.RedditPost
-import com.reddit.woahdude.network.imageLoadRequest
-import com.reddit.woahdude.util.Const
+import com.reddit.woahdude.model.RedditPost
+import com.reddit.woahdude.model.imageLoadRequest
+import com.reddit.woahdude.util.Metrics
 import com.reddit.woahdude.util.bindSharedPreference
 import com.reddit.woahdude.util.weightChildVisibility
 import com.reddit.woahdude.video.VideoPlayerHoldersPool
@@ -50,7 +50,7 @@ class ListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Const.calcDeviceMetrics(this)
+        Metrics.calcDeviceMetrics(this)
 
         val component = (application as WDApplication).component
         component.inject(this)
