@@ -3,53 +3,34 @@ package com.reddit.woahdude.model
 import com.reddit.woahdude.model.db.RedditDb
 import com.reddit.woahdude.model.network.PostsResponse
 import com.reddit.woahdude.model.network.RedditApi
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
+import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 class RedditRepository @Inject internal constructor(private val redditApi: RedditApi, private val redditDb: RedditDb) {
 
-    @Volatile
-    var isRequestInProgress = false
-        private set
     val status: PublishSubject<Status> = PublishSubject.create()
 
-    fun requestPosts(after: String? = null) = requestPosts(after, null)
-
-    fun refreshPosts() = requestPosts(null) {
-        redditDb.runInTransaction {
-            redditDb.postDao().deleteAll()
-        }
-    }
-
-    fun getCachedPosts() = redditDb.postDao().posts()
-
-    private fun requestPosts(after: String? = null, onSuccess : ((response: PostsResponse) -> Unit)? = null): Disposable {
-        isRequestInProgress = true
-
+    fun requestPosts(after: String? = null): Single<Unit> {
         return redditApi.getPosts(after = after)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
                 .doOnSubscribe { status.onNext(Status.LoadingStarted) }
-                .doOnTerminate { status.onNext(Status.LoadingFinished) }
-                .observeOn(Schedulers.io())
-                .subscribe(
-                        { response ->
-                            onSuccess?.invoke(response)
-                            insertPostsIntoDB(response, response.data.after)
-                            isRequestInProgress = false
-                        },
-                        {
-                            isRequestInProgress = false
-                            status.onNext(Status.LoadingFailed(it))
-                        }
-                )
+                .flatMap { response -> insertPostsIntoDB(response, response.data.after) }
+                .doOnEvent { _, e ->
+                    status.onNext(Status.LoadingFinished)
+                    e?.let { status.onNext(Status.LoadingFailed(it)) }
+                }
     }
 
-    private fun insertPostsIntoDB(response: PostsResponse, nextPageToken: String?) {
-        response.data.children.let { posts ->
+    fun clearPosts(): Single<Unit> = clearDB()
+
+    fun getPosts() = redditDb.postDao().posts()
+
+    private fun insertPostsIntoDB(response: PostsResponse, nextPageToken: String?): Single<Unit> {
+        return Single.fromCallable {
+            val posts = response.data.children
+
             redditDb.runInTransaction {
                 val start = redditDb.postDao().getNextIndex()
                 val items = posts.mapIndexed { index, child ->
@@ -59,7 +40,13 @@ class RedditRepository @Inject internal constructor(private val redditApi: Reddi
                 }
                 redditDb.postDao().insert(items)
             }
-        }
+        }.subscribeOn(Schedulers.io())
+    }
+
+    private fun clearDB(): Single<Unit> {
+        return Single.fromCallable {
+            redditDb.postDao().deleteAll()
+        }.subscribeOn(Schedulers.io())
     }
 
     sealed class Status {

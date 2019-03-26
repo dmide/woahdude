@@ -64,7 +64,7 @@ class ListActivity : AppCompatActivity() {
             visibleViewsDisposable = setupVisibleViewsObserver(this, layoutManager as LinearLayoutManager)
         }
         binding.swipeRefreshLayout.let { srl ->
-            srl.setOnRefreshListener { viewModel.refresh() }
+            srl.setOnRefreshListener { viewModel.refreshPosts() }
             val showProgress = Runnable { srl.isRefreshing = true }
             viewModel.loadingVisibility.observe(this, Observer { isLoading ->
                 if (!isLoading) {
@@ -122,7 +122,7 @@ class ListActivity : AppCompatActivity() {
     private fun showRefreshSnack(message: ListViewModel.RefreshMessage) {
         hideRefreshSnack()
         snackbar = Snackbar.make(binding.root, message.text, Snackbar.LENGTH_INDEFINITE)
-                .setAction(message.actionText) { viewModel.refresh() }
+                .setAction(message.actionText) { viewModel.refreshPosts() }
                 .apply { show() }
     }
 

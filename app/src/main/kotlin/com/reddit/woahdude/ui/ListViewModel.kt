@@ -14,6 +14,7 @@ import com.reddit.woahdude.model.RedditPost
 import com.reddit.woahdude.util.plusAssign
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.subjects.PublishSubject
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -33,11 +34,12 @@ class ListViewModel : BaseViewModel() {
     val loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
     val refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
     val posts: LiveData<PagedList<RedditPost>> by lazy {
-        LivePagedListBuilder<Int, RedditPost>(repository.getCachedPosts(), pagingConfig)
+        LivePagedListBuilder<Int, RedditPost>(repository.getPosts(), pagingConfig)
                 .setBoundaryCallback(RedditBoundaryCallback())
                 .build()
     }
 
+    private val requestStream = PublishSubject.create<RequestType>()
     private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     override fun onCreated() {
@@ -60,6 +62,16 @@ class ListViewModel : BaseViewModel() {
                         }
                     }
                 }
+
+        compositeDisposable += requestStream
+                .distinctUntilChanged()
+                .concatMapSingle { requestType ->
+                    when (requestType) {
+                        is RequestType.Request -> repository.requestPosts(requestType.after).onErrorReturn {} // errors handled in 'status' pipe
+                        is RequestType.Clear -> repository.clearPosts()
+                    }
+                }
+                .subscribe()
     }
 
     override fun onCleared() {
@@ -67,28 +79,22 @@ class ListViewModel : BaseViewModel() {
         compositeDisposable.dispose()
     }
 
-    fun refresh() {
-        compositeDisposable += repository.refreshPosts()
+    fun refreshPosts() {
+        requestStream.onNext(RequestType.Clear)
+        requestStream.onNext(RequestType.Request())
     }
 
     inner class RedditBoundaryCallback : PagedList.BoundaryCallback<RedditPost>() {
         override fun onZeroItemsLoaded() {
-            super.onZeroItemsLoaded()
-            if (repository.isRequestInProgress) return
-
-            compositeDisposable += repository.requestPosts()
+            requestStream.onNext(RequestType.Request())
             sharedPreferences.edit { putLong(LAST_REFRESH_TIME, System.currentTimeMillis()) }
         }
 
         override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
-            super.onItemAtEndLoaded(itemAtEnd)
-            if (repository.isRequestInProgress) return
-
-            compositeDisposable += repository.requestPosts(after = itemAtEnd.nextPageToken)
+            requestStream.onNext(RequestType.Request(after = itemAtEnd.nextPageToken))
         }
 
         override fun onItemAtFrontLoaded(itemAtFront: RedditPost) {
-            super.onItemAtFrontLoaded(itemAtFront)
             val now = System.currentTimeMillis()
             // sharedPreferences have an in-memory cache internally so it's ok
             val lastRefreshTime = sharedPreferences.getLong("LAST_REFRESH_TIME", now)
@@ -100,4 +106,9 @@ class ListViewModel : BaseViewModel() {
     }
 
     data class RefreshMessage(@StringRes val text: Int, @StringRes val actionText: Int)
+
+    sealed class RequestType {
+        data class Request(val after: String? = null) : RequestType()
+        object Clear : RequestType()
+    }
 }
