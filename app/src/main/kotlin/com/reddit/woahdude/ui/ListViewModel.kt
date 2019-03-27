@@ -1,16 +1,15 @@
 package com.reddit.woahdude.ui
 
-import android.content.SharedPreferences
 import androidx.annotation.StringRes
-import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.reddit.woahdude.R
-import com.reddit.woahdude.ui.common.BaseViewModel
-import com.reddit.woahdude.model.RedditRepository
+import com.reddit.woahdude.common.LocalStorage
 import com.reddit.woahdude.model.RedditPost
+import com.reddit.woahdude.model.RedditRepository
+import com.reddit.woahdude.ui.common.BaseViewModel
 import com.reddit.woahdude.util.plusAssign
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -19,7 +18,6 @@ import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-private const val LAST_REFRESH_TIME = "LAST_REFRESH_TIME"
 private val pagingConfig: PagedList.Config = PagedList.Config.Builder()
         .setPageSize(30)
         .setEnablePlaceholders(true)
@@ -29,7 +27,7 @@ class ListViewModel : BaseViewModel() {
     @Inject
     lateinit var repository: RedditRepository
     @Inject
-    lateinit var sharedPreferences: SharedPreferences
+    lateinit var localStorage: LocalStorage // to abstract away from android-package SharedPrefs to support testing
 
     val loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
     val refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
@@ -87,7 +85,7 @@ class ListViewModel : BaseViewModel() {
     inner class RedditBoundaryCallback : PagedList.BoundaryCallback<RedditPost>() {
         override fun onZeroItemsLoaded() {
             requestStream.onNext(RequestType.Request())
-            sharedPreferences.edit { putLong(LAST_REFRESH_TIME, System.currentTimeMillis()) }
+            localStorage.lastRefreshTime = System.currentTimeMillis()
         }
 
         override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
@@ -96,11 +94,9 @@ class ListViewModel : BaseViewModel() {
 
         override fun onItemAtFrontLoaded(itemAtFront: RedditPost) {
             val now = System.currentTimeMillis()
-            // sharedPreferences have an in-memory cache internally so it's ok
-            val lastRefreshTime = sharedPreferences.getLong("LAST_REFRESH_TIME", now)
-            if (now - lastRefreshTime > TimeUnit.HOURS.toMillis(4)) {
+            if (localStorage.lastRefreshTime != 0L && now - localStorage.lastRefreshTime > TimeUnit.HOURS.toMillis(4)) {
                 refreshMessage.value = RefreshMessage(R.string.new_posts_available, R.string.refresh)
-                sharedPreferences.edit { putLong(LAST_REFRESH_TIME, System.currentTimeMillis()) }
+                localStorage.lastRefreshTime = System.currentTimeMillis()
             }
         }
     }

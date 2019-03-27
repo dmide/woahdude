@@ -1,11 +1,11 @@
 package com.reddit.woahdude.common
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.res.Resources
-import android.preference.PreferenceManager
 import dagger.Module
 import dagger.Provides
+import javax.inject.Singleton
+
 
 @Module
 @Suppress("unused")
@@ -22,7 +22,8 @@ class AppModule(val appContext: Context) {
     }
 
     @Provides
-    fun provideSharedPreferences(): SharedPreferences {
-        return PreferenceManager.getDefaultSharedPreferences(appContext)
+    @Singleton
+    fun provideLocalStorage(context: Context): LocalStorage {
+        return LocalStorage(context)
     }
 }
