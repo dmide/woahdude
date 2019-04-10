@@ -8,4 +8,6 @@
     <string name="comments">Comments: %1$d</string>
     <string name="view_in_app">View in app/browser</string>
     <string name="link_copied_to_clipboard">Link copied to clipboard</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_url">https://sites.google.com/view/woahdude-privacy/home</string>
 </resources>

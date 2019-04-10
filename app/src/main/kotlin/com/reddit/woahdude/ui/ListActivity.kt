@@ -1,8 +1,13 @@
 package com.reddit.woahdude.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -98,6 +103,9 @@ class ListActivity : AppCompatActivity() {
                 lastViewedPosition = -1
             }
         })
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
     }
 
     override fun onPause() {
@@ -108,6 +116,21 @@ class ListActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         playerHoldersPool.resumeCurrent()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu) : Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.getItemId() == R.id.privacy_policy) {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_policy_url)));
+            startActivity(browserIntent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     override fun onDestroy() {
