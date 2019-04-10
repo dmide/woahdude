@@ -1,5 +1,7 @@
 Pure Kotlin Android reader for the *r/woahdude* subreddit.
 
+[Google play page][play]
+
 ### Libraries
 * [Android Architecture Components][arch]
   * Room
@@ -13,6 +15,7 @@ Pure Kotlin Android reader for the *r/woahdude* subreddit.
 * [ExoPlayer][exoplayer]
 
 
+
 [arch]: https://developer.android.com/arch
 [rx]: https://github.com/ReactiveX/RxJava
 [dagger]: https://github.com/google/dagger
@@ -20,3 +23,4 @@ Pure Kotlin Android reader for the *r/woahdude* subreddit.
 [glide]: https://github.com/bumptech/glide
 [databinding]: https://developer.android.com/topic/libraries/data-binding/
 [exoplayer]: https://github.com/google/ExoPlayer
+[play]: https://play.google.com/store/apps/details?id=com.reddit.woahdude
