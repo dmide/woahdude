@@ -1,6 +1,8 @@
 package com.reddit.woahdude.common
 
 import android.app.Application
+import android.content.Context
+import androidx.multidex.MultiDex
 import com.crashlytics.android.Crashlytics
 import com.reddit.woahdude.BuildConfig
 import com.reddit.woahdude.model.db.DBModule
@@ -24,5 +26,10 @@ class WDApplication : Application() {
         super.onCreate()
         Fabric.with(this, Crashlytics())
         Timber.plant(if (BuildConfig.DEBUG) DebugTree() else ReleaseTree())
+    }
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        MultiDex.install(this)
     }
 }
