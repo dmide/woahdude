@@ -111,7 +111,7 @@ class Youtube(private val url: String) : MediaProvider() {
 }
 
 class ImgurVideo(private val redditPost: RedditPost) : MediaProvider() {
-    val url = redditPost.url!! // always non-null at this point
+    private val url = redditPost.url!! // always non-null at this point
 
     override fun imageResource(): Any? {
         val height = redditPost.preview?.reddit_video?.height

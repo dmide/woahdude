@@ -2,7 +2,7 @@ package com.reddit.woahdude.ui.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.reddit.woahdude.common.AppComponent
+import com.reddit.woahdude.app.AppComponent
 
 class ViewModelFactory(private val component: AppComponent) : ViewModelProvider.Factory {
 

@@ -24,10 +24,11 @@ object Metrics {
         private set
     var density: Float = 0.toFloat()
         private set
-    var isInitialised: Boolean = false
-        private set
+    private var isInitialised: Boolean = false
 
-    fun calcDeviceMetrics(activity: Activity) {
+    fun initIfNeeded(activity: Activity) {
+        if (isInitialised) return
+
         val metrics = DisplayMetrics()
         val windowManager = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         windowManager.defaultDisplay.getMetrics(metrics)

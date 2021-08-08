@@ -27,36 +27,38 @@ class ListViewModel : BaseViewModel() {
     @Inject
     lateinit var repository: RedditRepository
     @Inject
-    lateinit var localStorage: LocalStorage // to abstract away from android-package SharedPrefs to support testing
+    lateinit var localStorage: LocalStorage
 
-    val loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
-    val refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
-    val posts: LiveData<PagedList<RedditPost>> by lazy {
-        LivePagedListBuilder<Int, RedditPost>(repository.getPosts(), pagingConfig)
-                .setBoundaryCallback(RedditBoundaryCallback())
-                .build()
-    }
-
+    private val _loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
+    private val _refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
     private val requestStream = PublishSubject.create<RequestType>()
     private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
+    val loadingVisibility: LiveData<Boolean> get() = _loadingVisibility
+    val refreshMessage: LiveData<RefreshMessage> get() = _refreshMessage
+    val posts: LiveData<PagedList<RedditPost>> by lazy {
+        LivePagedListBuilder<Int, RedditPost>(repository.getPosts(), pagingConfig)
+            .setBoundaryCallback(RedditBoundaryCallback())
+            .build()
+    }
+
     override fun onCreated() {
-        loadingVisibility.value = false
+        _loadingVisibility.value = false
 
         compositeDisposable += repository.status
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { status ->
                     when (status) {
                         is RedditRepository.Status.LoadingStarted -> {
-                            loadingVisibility.value = true
-                            refreshMessage.value = null
+                            _loadingVisibility.value = true
+                            _refreshMessage.value = null
                         }
                         is RedditRepository.Status.LoadingFinished -> {
-                            loadingVisibility.value = false
+                            _loadingVisibility.value = false
                         }
                         is RedditRepository.Status.LoadingFailed -> {
                             Timber.e(status.t, "onRetrievePostListError")
-                            refreshMessage.value = RefreshMessage(R.string.error_loading, R.string.retry)
+                            _refreshMessage.value = RefreshMessage(R.string.error_loading, R.string.retry)
                         }
                     }
                 }
@@ -95,7 +97,7 @@ class ListViewModel : BaseViewModel() {
         override fun onItemAtFrontLoaded(itemAtFront: RedditPost) {
             val now = System.currentTimeMillis()
             if (localStorage.lastRefreshTime != 0L && now - localStorage.lastRefreshTime > TimeUnit.HOURS.toMillis(4)) {
-                refreshMessage.value = RefreshMessage(R.string.new_posts_available, R.string.refresh)
+                _refreshMessage.value = RefreshMessage(R.string.new_posts_available, R.string.refresh)
                 localStorage.lastRefreshTime = System.currentTimeMillis()
             }
         }

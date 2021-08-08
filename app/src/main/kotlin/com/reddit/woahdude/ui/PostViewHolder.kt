@@ -18,10 +18,12 @@ import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.model.*
 import com.reddit.woahdude.util.Metrics
+import com.reddit.woahdude.util.addTo
 import com.reddit.woahdude.util.onFinish
 import com.reddit.woahdude.util.toast
-import com.reddit.woahdude.video.VideoPlayerHolder
-import com.reddit.woahdude.video.VideoPlayerHoldersPool
+import com.reddit.woahdude.video.holder.PlayerState
+import com.reddit.woahdude.video.holder.VideoPlayerHolder
+import com.reddit.woahdude.video.holder.VideoPlayerHoldersPool
 import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
 import javax.inject.Inject
@@ -30,8 +32,10 @@ import javax.inject.Inject
 class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
     @Inject
     lateinit var resources: Resources
+
     @Inject
     lateinit var context: Context
+
     @Inject
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
@@ -42,7 +46,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
     private var redditPost: RedditPost? = null
     private var videoPlayerHolder: VideoPlayerHolder? = null
-    private var compositeDisposable: CompositeDisposable? = null
+    private var compositeDisposable = CompositeDisposable()
 
     fun bind(redditPost: RedditPost?) {
         this.redditPost = redditPost
@@ -51,9 +55,11 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             listOf(postTitle, postType, postComments).forEach { (it as MutableLiveData).value = "" }
             binding.externalLinkButton.isVisible = false
         } else {
-            (postTitle as MutableLiveData).value = adapterPosition.toString() + ". " + redditPost.title
+            (postTitle as MutableLiveData).value =
+                adapterPosition.toString() + ". " + redditPost.title
             (postType as MutableLiveData).value = redditPost.getPostType()
-            (postComments as MutableLiveData).value = resources.getString(R.string.comments, redditPost.commentsCount)
+            (postComments as MutableLiveData).value =
+                resources.getString(R.string.comments, redditPost.commentsCount)
 
             loadImage(redditPost)
             loadVideo(redditPost)
@@ -66,14 +72,14 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
         binding.placeholder.setImageResource(R.drawable.list_placeholder)
         binding.progress.isVisible = true
         redditPost.imageLoadRequest(GlideApp.with(context), redditPost.getImageResource())
-                .onFinish({
-                    binding.progress.isVisible = false
-                }, { e ->
-                    Timber.e(e, "onImageError")
-                    binding.imageView.isVisible = false
-                    onError()
-                })
-                .into(binding.imageView)
+            .onFinish({
+                binding.progress.isVisible = false
+            }, { e ->
+                Timber.e(e, "onImageError")
+                binding.imageView.isVisible = false
+                onError()
+            })
+            .into(binding.imageView)
     }
 
     private fun loadVideo(redditPost: RedditPost) {
@@ -81,34 +87,34 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
         val videoUrl = redditPost.getVideoUrl() ?: return
 
-        videoPlayerHolder = (videoPlayerHolder ?: playerHoldersPool.get()).apply {
-            prepareVideoSource(videoUrl)
-            bind(binding.videoView, binding.videoViewContainer)
+        val playerHolder = videoPlayerHolder ?: playerHoldersPool.get()
+        videoPlayerHolder = playerHolder
+        playerHolder.prepareVideoSource(videoUrl)
+        playerHolder.bind(binding.videoView, binding.videoViewContainer)
 
-            compositeDisposable = CompositeDisposable().apply {
-                val loadingDisposable = loadingSubject.map { if (it) VISIBLE else GONE }.subscribe {
-                    binding.progress.visibility = it
-                }
-                add(loadingDisposable)
-                add(sizeSubject.subscribe { (w, h) ->
+        compositeDisposable.clear()
+        playerHolder.stateObservable.subscribe { state ->
+            when(state) {
+                is PlayerState.Data -> {
+                    binding.videoViewContainer.isVisible = true
+
+                    binding.progress.isVisible = state.isLoading
+
+                    val (w, h) = state.mediaSize
                     val dimensions = MediaProvider.getAdaptedMediaDimensions(w, h)
                     binding.videoViewContainer.layoutParams.height = dimensions.height
                     binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
-                })
-                add(errorSubject.subscribe { e ->
-                    Timber.e(e, "onPlayerError")
-                    compositeDisposable?.remove(loadingDisposable)
-                    binding.videoViewContainer.isVisible = false
+
+                    binding.sound.isVisible = state.hasSound
+                    val soundIcon = if (state.isSoundEnabled) R.drawable.ic_volume_on else R.drawable.ic_volume_off
+                    binding.sound.setImageResource(soundIcon)
+                }
+                is PlayerState.Error -> {
+                    Timber.e(state.exception, "onPlayerError")
                     onError()
-                })
-                add(hasSoundSubject.startWith(false).subscribe { hasSound ->
-                    binding.sound.visibility = if (hasSound) VISIBLE else GONE
-                })
-                add(volumeSubject.startWith(false).subscribe { isEnabled ->
-                    binding.sound.setImageResource(if (isEnabled) R.drawable.ic_volume_on else R.drawable.ic_volume_off)
-                })
+                }
             }
-        }
+        }.addTo(compositeDisposable)
     }
 
     fun release() {
@@ -118,7 +124,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
             playerHoldersPool.putBack(it)
         }
         videoPlayerHolder = null
-        compositeDisposable?.dispose()
+        compositeDisposable.clear()
     }
 
     fun showVideoIfNeeded() {
@@ -144,7 +150,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     fun onTypeClick() {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("woahdude link", redditPost?.permalinkUrl())
-        clipboard.primaryClip = clip
+        clipboard.setPrimaryClip(clip)
         context.toast(resources.getText(R.string.link_copied_to_clipboard))
     }
 
@@ -169,6 +175,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     private fun onError() {
         binding.apply {
             placeholder.setImageResource(R.drawable.list_error_placeholder)
+            videoViewContainer.isVisible = false
             progress.isVisible = false
             externalLinkButton.isVisible = true
         }

@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -22,14 +21,14 @@ import com.google.android.material.snackbar.Snackbar
 import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.ui.common.ViewModelFactory
-import com.reddit.woahdude.common.WDApplication
+import com.reddit.woahdude.app.WDApplication
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.model.RedditPost
 import com.reddit.woahdude.model.imageLoadRequest
-import com.reddit.woahdude.util.Metrics
+import com.reddit.woahdude.ui.common.BaseActivity
 import com.reddit.woahdude.util.bindSharedPreference
 import com.reddit.woahdude.util.weightChildVisibility
-import com.reddit.woahdude.video.VideoPlayerHoldersPool
+import com.reddit.woahdude.video.holder.VideoPlayerHoldersPool
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
@@ -39,7 +38,7 @@ import javax.inject.Inject
 
 private const val LAST_VIEWED_POSITION = "LAST_VIEWED_POSITION"
 
-class ListActivity : AppCompatActivity() {
+class ListActivity : BaseActivity() {
     private lateinit var binding: ActivityListBinding
     private lateinit var viewModel: ListViewModel
     private lateinit var visibleViewsDisposable: Disposable
@@ -54,8 +53,6 @@ class ListActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        Metrics.calcDeviceMetrics(this)
 
         val component = (application as WDApplication).component
         component.inject(this)
@@ -90,7 +87,7 @@ class ListActivity : AppCompatActivity() {
             hide(false)
         }
 
-        binding.setLifecycleOwner(this)
+        binding.lifecycleOwner = this
         binding.viewModel = viewModel
 
         viewModel.refreshMessage.observe(this, Observer { message ->
@@ -124,7 +121,7 @@ class ListActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.getItemId() == R.id.privacy_policy) {
+        if (item.itemId == R.id.privacy_policy) {
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_policy_url)));
             startActivity(browserIntent);
             return true;
@@ -166,8 +163,7 @@ class ListActivity : AppCompatActivity() {
         }
 
         val sizeProvider = ViewPreloadSizeProvider<RedditPost>()
-        val preloader = RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 9 /*maxPreload*/)
-        return preloader
+        return RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 9 /*maxPreload*/)
     }
 
     private fun setupVisibleViewsObserver(recyclerView: RecyclerView, llm: LinearLayoutManager): Disposable {

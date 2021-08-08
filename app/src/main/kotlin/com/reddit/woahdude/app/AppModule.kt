@@ -1,7 +1,10 @@
-package com.reddit.woahdude.common
+package com.reddit.woahdude.app
 
 import android.content.Context
 import android.content.res.Resources
+import android.os.Handler
+import android.os.Looper
+import com.reddit.woahdude.common.LocalStorage
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -9,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @Suppress("unused")
-class AppModule(val appContext: Context) {
+class AppModule(private val appContext: Context) {
 
     @Provides
     fun provideAppContext(): Context {
@@ -19,6 +22,12 @@ class AppModule(val appContext: Context) {
     @Provides
     fun provideResources(): Resources {
         return appContext.resources
+    }
+
+    @Provides
+    @Singleton
+    fun provideMainHandler(): Handler {
+        return Handler(Looper.getMainLooper())
     }
 
     @Provides

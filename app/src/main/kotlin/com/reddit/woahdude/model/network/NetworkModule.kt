@@ -11,7 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 @Module
 @Suppress("unused")
 object NetworkModule {
-    const val BASE_URL: String = "https://www.reddit.com/"
+    private const val BASE_URL: String = "https://www.reddit.com/"
 
     @Provides
     @Reusable

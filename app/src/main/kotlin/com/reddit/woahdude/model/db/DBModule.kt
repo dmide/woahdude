@@ -19,11 +19,4 @@ object DBModule {
     internal fun provideRedditDb(context: Context): RedditDb {
         return Room.databaseBuilder(context, RedditDb::class.java, "woahdude.db").build()
     }
-
-    @Provides
-    @Reusable
-    @JvmStatic
-    internal fun provideDataSourceFactory(context: Context): DataSource.Factory {
-        return CacheDataSourceFactory(context, 100.megabytes, 20.megabytes)
-    }
 }

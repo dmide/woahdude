@@ -13,6 +13,7 @@ import com.bumptech.glide.request.target.Target
 import com.reddit.woahdude.common.GlideRequest
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import kotlin.math.min
 
 
 val Int.dp: Int
@@ -44,17 +45,15 @@ fun RecyclerView.getChildVisiblePercent(child: View?): Int {
     val rowRect = Rect()
     child.getGlobalVisibleRect(rowRect)
 
-    var percent: Int
-    if (rowRect.bottom >= bottom) {
+    return if (rowRect.bottom >= bottom) {
         val visibleHeightFirst = bottom - rowRect.top
-        percent = visibleHeightFirst * 100 / child.getHeight()
+        visibleHeightFirst * 100 / child.height
     } else {
         val visibleHeightFirst = rowRect.bottom - top
-        percent = visibleHeightFirst * 100 / child.getHeight()
+        visibleHeightFirst * 100 / child.height
+    }.let {
+        min(it, 100)
     }
-
-    if (percent > 100) percent = 100
-    return percent
 }
 
 fun GlideRequest<Drawable>.onFinish(onSuccess: () -> Unit, onError: (Exception?) -> Unit) : GlideRequest<Drawable> {
@@ -77,3 +76,7 @@ operator fun CompositeDisposable.plusAssign(disposable: Disposable) {
 
 fun Context.toast(text: CharSequence, long: Boolean = false): Toast =
         Toast.makeText(this.applicationContext, text, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).apply { show() }
+
+fun Disposable.addTo(compositeDisposable: CompositeDisposable) {
+    compositeDisposable.add(this)
+}

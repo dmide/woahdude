@@ -1,4 +1,4 @@
-package com.reddit.woahdude.video
+package com.reddit.woahdude.video.holder
 
 import javax.inject.Inject
 import javax.inject.Provider

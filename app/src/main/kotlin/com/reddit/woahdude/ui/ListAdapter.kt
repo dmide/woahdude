@@ -6,7 +6,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import com.reddit.woahdude.R
-import com.reddit.woahdude.common.WDApplication
+import com.reddit.woahdude.app.WDApplication
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.model.RedditPost
 
