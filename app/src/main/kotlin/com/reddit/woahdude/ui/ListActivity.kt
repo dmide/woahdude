@@ -121,13 +121,23 @@ class ListActivity : BaseActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.privacy_policy) {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_policy_url)));
-            startActivity(browserIntent);
+        if (item.itemId == R.id.settings) {
+            startActivityForResult(Intent(this, SettingsActivity::class.java), SettingsActivity.SETTINGS_REQUEST_CODE)
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == SettingsActivity.SETTINGS_REQUEST_CODE) {
+            when(resultCode) {
+                SettingsActivity.SETTINGS_RESULT_REFRESH_NEEDED -> {
+                    viewModel.refreshPosts()
+                }
+            }
+        }
     }
 
     override fun onDestroy() {

@@ -7,6 +7,7 @@ import com.reddit.woahdude.model.Video
 import com.reddit.woahdude.ui.ListActivity
 import com.reddit.woahdude.ui.ListViewModel
 import com.reddit.woahdude.ui.PostViewHolder
+import com.reddit.woahdude.ui.SettingsActivity
 import com.reddit.woahdude.video.VideoModule
 import dagger.Component
 import javax.inject.Singleton
@@ -16,7 +17,9 @@ import javax.inject.Singleton
 interface AppComponent {
 
     fun inject(listActivity: ListActivity)
-    
+
+    fun inject(settingsActivity: SettingsActivity)
+
     fun inject(listViewModel: ListViewModel)
 
     fun inject(redditRepository: RedditRepository)

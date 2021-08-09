@@ -13,6 +13,7 @@
         android:theme="@style/AppTheme"
         tools:replace="android:allowBackup">
 
+        <activity android:name=".ui.SettingsActivity"/>
         <activity android:name=".ui.ListActivity"
             android:theme="@style/AppTheme" />
 

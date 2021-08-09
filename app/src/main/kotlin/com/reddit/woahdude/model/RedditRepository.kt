@@ -1,5 +1,6 @@
 package com.reddit.woahdude.model
 
+import com.reddit.woahdude.common.LocalStorage
 import com.reddit.woahdude.model.db.RedditDb
 import com.reddit.woahdude.model.network.PostsResponse
 import com.reddit.woahdude.model.network.RedditApi
@@ -8,7 +9,11 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
-class RedditRepository @Inject internal constructor(private val redditApi: RedditApi, private val redditDb: RedditDb) {
+class RedditRepository @Inject internal constructor(
+    private val redditApi: RedditApi,
+    private val redditDb: RedditDb,
+    private val localStorage: LocalStorage
+) {
 
     val status: PublishSubject<Status> = PublishSubject.create()
 
@@ -16,7 +21,7 @@ class RedditRepository @Inject internal constructor(private val redditApi: Reddi
         return redditApi.getPosts(after = after)
                 .subscribeOn(Schedulers.io())
                 .doOnSubscribe { status.onNext(Status.LoadingStarted) }
-                .flatMap { response -> insertPostsIntoDB(response, response.data.after) }
+                .flatMap { response -> filterAndStore(response, response.data.after) }
                 .doOnEvent { _, e ->
                     status.onNext(Status.LoadingFinished)
                     e?.let { status.onNext(Status.LoadingFailed(it)) }
@@ -27,9 +32,13 @@ class RedditRepository @Inject internal constructor(private val redditApi: Reddi
 
     fun getPosts() = redditDb.postDao().posts()
 
-    private fun insertPostsIntoDB(response: PostsResponse, nextPageToken: String?): Single<Unit> {
+    private fun filterAndStore(response: PostsResponse, nextPageToken: String?): Single<Unit> {
         return Single.fromCallable {
-            val posts = response.data.children
+            val isFilterEnabled = localStorage.isFilteringNonMediaPosts
+            val posts = response.data.children.filter {
+                val post = it.data
+                !isFilterEnabled || post.getImageResource() != null || post.getVideoUrl() != null
+            }
 
             redditDb.runInTransaction {
                 val start = redditDb.postDao().getNextIndex()
