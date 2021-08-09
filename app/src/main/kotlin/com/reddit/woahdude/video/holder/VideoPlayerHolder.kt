@@ -98,11 +98,11 @@ class VideoPlayerHolder @Inject constructor(
                 state: Int
             ) {
                 when (state) {
-                    Player.STATE_READY -> {
+                    Player.STATE_READY, Player.STATE_IDLE -> {
                         stateSubject.onNext(getDataState().copy(isLoading = false))
                     }
-                    Player.STATE_IDLE, Player.STATE_BUFFERING -> {
-                        stateSubject.onNext(getDataState().copy(isLoading = false))
+                    Player.STATE_BUFFERING -> {
+                        stateSubject.onNext(getDataState().copy(isLoading = true))
                     }
                 }
             }
