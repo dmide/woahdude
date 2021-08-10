@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import com.reddit.woahdude.ui.components.WrappedDrawable
 import com.reddit.woahdude.util.Metrics
+import java.net.URLDecoder
 
 //TODO use actual APIs instead of this hackery
 sealed class MediaProvider {
@@ -163,24 +164,23 @@ class RedditVideo(private val url: String, private val media: Media?) : MediaPro
 }
 
 class Gfycat(private val url: String, private val media: Media?) : MediaProvider() {
-    override fun imageResource(): String? {
-        return "https://thumbs.gfycat.com/${getHash()}-poster.jpg"
+    private val idRegex = Regex("com/(.*)-size_restricted")
+
+    override fun imageResource(): String {
+        return "https://thumbs.gfycat.com/${extractId()}-poster.jpg"
     }
 
-    override fun videoUrl(): String? {
-        return "https://giant.gfycat.com/${getHash()}.mp4"
+    override fun videoUrl(): String {
+        return "https://giant.gfycat.com/${extractId()}.mp4"
     }
 
-    override fun typeString(): String? = "gfycat"
+    override fun typeString(): String = "gfycat"
 
-    /*
-        Some hashes are case-sensitive. thumbnailUrl always contains hash with correct case
-        while url is always lowercase.
-     */
-    private fun getHash(): String {
-        media?.embedded?.thumbnailUrl?.let {
-            return it.removePrefix("https://thumbs.gfycat.com/").removeSuffix("-size_restricted.gif")
-        }
-        return url.removePrefix("https://gfycat.com/")
+    private fun extractId(): String {
+        // Some ids are case-sensitive, thumbnailUrl always contains id with correct case
+        // while url is always lowercase.
+        return media?.embedded?.thumbnailUrl?.let { url ->
+            idRegex.find(URLDecoder.decode(url))?.groupValues?.get(1)
+        } ?: url.removePrefix("https://gfycat.com/")
     }
 }
