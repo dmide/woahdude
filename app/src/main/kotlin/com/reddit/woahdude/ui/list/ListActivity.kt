@@ -2,7 +2,6 @@ package com.reddit.woahdude.ui.list
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -23,7 +22,6 @@ import com.reddit.woahdude.model.imageLoadRequest
 import com.reddit.woahdude.ui.common.BaseActivity
 import com.reddit.woahdude.ui.common.ViewModelFactory
 import com.reddit.woahdude.ui.settings.SettingsActivity
-import com.reddit.woahdude.util.bindSharedPreference
 import com.reddit.woahdude.util.weightChildVisibility
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -31,16 +29,25 @@ import io.reactivex.subjects.PublishSubject
 import timber.log.Timber
 
 
-private const val LAST_VIEWED_POSITION = "LAST_VIEWED_POSITION"
-
 class ListActivity : BaseActivity() {
     private lateinit var binding: ActivityListBinding
     private lateinit var viewModel: ListViewModel
-    private lateinit var visibleViewsDisposable: Disposable
+
     private val listAdapter = ListAdapter()
-    private val visibleStatePublishSubject = PublishSubject.create<VisibleState>()
+    private val visibleStateSubject = PublishSubject.create<VisibleState>()
+    private val onScrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+            val llm = recyclerView.layoutManager as LinearLayoutManager
+            visibleStateSubject.onNext(
+                VisibleState(llm.findFirstVisibleItemPosition(),
+                    llm.findLastVisibleItemPosition())
+            )
+        }
+    }
+
+    private var visibleViewsDisposable: Disposable? = null
     private var snackbar: Snackbar? = null
-    private var lastViewedPosition by bindSharedPreference(this, LAST_VIEWED_POSITION, 0)
     private var currentPosition: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,21 +56,26 @@ class ListActivity : BaseActivity() {
         val component = (application as WDApplication).component
         viewModel = ViewModelProviders.of(this, ViewModelFactory(component)).get(ListViewModel::class.java)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_list)
+        binding.lifecycleOwner = this
+        binding.viewModel = viewModel
+
         binding.postList.apply {
             layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             adapter = listAdapter
             addOnScrollListener(setupRecyclerViewPreloader(listAdapter))
-            visibleViewsDisposable = setupVisibleViewsObserver(this, layoutManager as LinearLayoutManager)
+            addOnScrollListener(onScrollListener)
+            visibleViewsDisposable = setupVisibleViewsObserver(this)
         }
-        binding.swipeRefreshLayout.let { srl ->
-            srl.setOnRefreshListener { viewModel.refreshPosts() }
-            val showProgress = Runnable { srl.isRefreshing = true }
-            viewModel.loadingVisibility.observe(this, Observer { isLoading ->
+
+        binding.swipeRefreshLayout.apply {
+            setOnRefreshListener { viewModel.refreshPosts() }
+            val showProgress = Runnable { isRefreshing = true }
+            viewModel.loadingVisibility.observe(this@ListActivity, Observer { isLoading ->
                 if (!isLoading) {
-                    srl.removeCallbacks(showProgress)
-                    srl.isRefreshing = false
+                    removeCallbacks(showProgress)
+                    isRefreshing = false
                 } else {
-                    srl.postDelayed(showProgress, 1000) //show progress only after 1 second of loading
+                    postDelayed(showProgress, 1000) //show progress only after 1 second of loading
                 }
             })
         }
@@ -76,20 +88,6 @@ class ListActivity : BaseActivity() {
             attachToRecyclerView(binding.postList)
             hide(false)
         }
-
-        binding.lifecycleOwner = this
-        binding.viewModel = viewModel
-
-        viewModel.refreshMessage.observe(this, Observer { message ->
-            if (message != null) showRefreshSnack(message) else hideRefreshSnack()
-        })
-        viewModel.posts.observe(this, Observer { posts ->
-            listAdapter.submitList(posts)
-            if (lastViewedPosition != -1) {
-                binding.postList.scrollToPosition(lastViewedPosition)
-                lastViewedPosition = -1
-            }
-        })
 
         binding.toolbar.apply {
             title = viewModel.getTitle()
@@ -104,6 +102,21 @@ class ListActivity : BaseActivity() {
                 return@setOnMenuItemClickListener true
             }
         }
+
+        viewModel.refreshMessage.observe(this, Observer { message ->
+            if (message != null) showRefreshSnack(message) else hideRefreshSnack()
+        })
+
+        viewModel.posts.observe(this, Observer { posts ->
+            listAdapter.submitList(posts)
+            if (viewModel.lastViewedPosition != -1) {
+                binding.postList.scrollToPosition(viewModel.lastViewedPosition)
+                viewModel.lastViewedPosition = -1
+            } else {
+                visibleViewsDisposable?.dispose()
+                visibleViewsDisposable = setupVisibleViewsObserver(binding.postList)
+            }
+        })
     }
 
     override fun onPause() {
@@ -128,12 +141,14 @@ class ListActivity : BaseActivity() {
         }
     }
 
+    override fun onStop() {
+        viewModel.lastViewedPosition = currentPosition
+        super.onStop()
+    }
+
     override fun onDestroy() {
         viewModel.playerHoldersPool.release()
-        visibleViewsDisposable.dispose()
-        if (isFinishing) {
-            lastViewedPosition = currentPosition
-        }
+        visibleViewsDisposable?.dispose()
         super.onDestroy()
     }
 
@@ -155,7 +170,7 @@ class ListActivity : BaseActivity() {
                 return if (item == null) mutableListOf() else mutableListOf(item)
             }
 
-            override fun getPreloadRequestBuilder(redditPost: RedditPost): RequestBuilder<*>? {
+            override fun getPreloadRequestBuilder(redditPost: RedditPost): RequestBuilder<*> {
                 return redditPost.imageLoadRequest(GlideApp.with(this@ListActivity))
             }
         }
@@ -164,38 +179,27 @@ class ListActivity : BaseActivity() {
         return RecyclerViewPreloader(Glide.with(this), preloadModelProvider, sizeProvider, 9 /*maxPreload*/)
     }
 
-    private fun setupVisibleViewsObserver(recyclerView: RecyclerView, llm: LinearLayoutManager): Disposable {
-        val disposable = visibleStatePublishSubject
-                // switchMap here is to hack around null views
-                .switchMap<View> { state ->
-                    val view = (state.firstVisibleItem..state.lastVisibleItem)
-                            .mapNotNull { index -> llm.findViewByPosition(index) }
-                            .maxBy { child -> recyclerView.weightChildVisibility(child) }
+    private fun setupVisibleViewsObserver(recyclerView: RecyclerView): Disposable {
+        val llm = recyclerView.layoutManager as LinearLayoutManager
 
-                    return@switchMap if (view != null) Observable.just(view) else Observable.empty()
-                }
-                .distinctUntilChanged()
-                .doOnNext { currentPosition = binding.postList.getChildAdapterPosition(it) }
-                .subscribe(
-                        { mostVisibleChild ->
-                            viewModel.playerHoldersPool.pauseCurrent() // pause playback when the focus changes
-                            val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
-                            (holder as PostViewHolder).showVideoIfNeeded()
-                        },
-                        { Timber.e(it, "error while observing visible items") })
+        return visibleStateSubject
+            .switchMap { state ->
+                val view = (state.firstVisibleItem..state.lastVisibleItem)
+                    .mapNotNull { index -> llm.findViewByPosition(index) }
+                    .maxBy { child -> recyclerView.weightChildVisibility(child) }
 
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                visibleStatePublishSubject.onNext(
-                    VisibleState(llm.findFirstVisibleItemPosition(),
-                        llm.findLastVisibleItemPosition())
-                )
+                return@switchMap if (view != null) Observable.just(view) else Observable.empty()
             }
-        })
-
-        return disposable;
+            .distinctUntilChanged()
+            .doOnNext { currentPosition = binding.postList.getChildAdapterPosition(it) }
+            .subscribe(
+                { mostVisibleChild ->
+                    viewModel.playerHoldersPool.pauseCurrent() // pause playback when focus changes
+                    val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
+                    (holder as PostViewHolder).showVideoIfNeeded()
+                },
+                { Timber.e(it, "error while observing visible items") });
     }
 
-    data class VisibleState(val firstVisibleItem: Int, val lastVisibleItem: Int)
+    private data class VisibleState(val firstVisibleItem: Int, val lastVisibleItem: Int)
 }

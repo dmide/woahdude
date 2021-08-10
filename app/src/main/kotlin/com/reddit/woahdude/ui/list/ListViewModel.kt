@@ -20,9 +20,9 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private val pagingConfig: PagedList.Config = PagedList.Config.Builder()
-        .setPageSize(30)
-        .setEnablePlaceholders(true)
-        .build()
+    .setPageSize(30)
+    .setEnablePlaceholders(true)
+    .build()
 
 class ListViewModel : BaseViewModel() {
     @Inject
@@ -36,6 +36,12 @@ class ListViewModel : BaseViewModel() {
     private val _refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
     private val requestStream = PublishSubject.create<RequestType>()
     private val compositeDisposable: CompositeDisposable = CompositeDisposable()
+
+    var lastViewedPosition: Int
+        get() = localStorage.lastViewedPosition
+        set(value) {
+            localStorage.lastViewedPosition = value
+        }
 
     val loadingVisibility: LiveData<Boolean> get() = _loadingVisibility
     val refreshMessage: LiveData<RefreshMessage> get() = _refreshMessage
