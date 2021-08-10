@@ -1,4 +1,4 @@
-package com.reddit.woahdude.ui
+package com.reddit.woahdude.ui.list
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
@@ -11,6 +11,7 @@ import com.reddit.woahdude.model.RedditPost
 import com.reddit.woahdude.model.RedditRepository
 import com.reddit.woahdude.ui.common.BaseViewModel
 import com.reddit.woahdude.util.plusAssign
+import com.reddit.woahdude.video.holder.VideoPlayerHoldersPool
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
@@ -28,6 +29,8 @@ class ListViewModel : BaseViewModel() {
     lateinit var repository: RedditRepository
     @Inject
     lateinit var localStorage: LocalStorage
+    @Inject
+    lateinit var playerHoldersPool: VideoPlayerHoldersPool
 
     private val _loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
     private val _refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()
@@ -83,6 +86,8 @@ class ListViewModel : BaseViewModel() {
         requestStream.onNext(RequestType.Clear)
         requestStream.onNext(RequestType.Request())
     }
+
+    fun getTitle() = localStorage.settingsState.selectedSubredditTitle
 
     inner class RedditBoundaryCallback : PagedList.BoundaryCallback<RedditPost>() {
         override fun onZeroItemsLoaded() {

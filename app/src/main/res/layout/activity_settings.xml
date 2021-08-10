@@ -60,5 +60,35 @@
                 android:layout_marginEnd="16dp"
                 android:clickable="false" />
         </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/subredditContainer"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/settings_item_height"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground">
+
+            <TextView
+                android:id="@+id/subredditTitle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clickable="false"
+                android:drawableStart="@drawable/ic_subreddit_24"
+                android:drawablePadding="32dp"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="@string/selected_subreddit"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/subredditValue"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clickable="false"
+                android:gravity="center_vertical|end"
+                android:paddingEnd="16dp"
+                android:textSize="16sp" />
+        </FrameLayout>
     </LinearLayout>
 </layout>

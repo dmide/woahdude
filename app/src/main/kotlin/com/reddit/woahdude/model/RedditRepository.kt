@@ -18,7 +18,7 @@ class RedditRepository @Inject internal constructor(
     val status: PublishSubject<Status> = PublishSubject.create()
 
     fun requestPosts(after: String? = null): Single<Unit> {
-        return redditApi.getPosts(after = after)
+        return redditApi.getPosts(subreddit = localStorage.selectedSubreddit, after = after)
                 .subscribeOn(Schedulers.io())
                 .doOnSubscribe { status.onNext(Status.LoadingStarted) }
                 .flatMap { response -> filterAndStore(response, response.data.after) }

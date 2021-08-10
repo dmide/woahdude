@@ -7,7 +7,7 @@
 
         <variable
             name="viewHolder"
-            type="com.reddit.woahdude.ui.PostViewHolder" />
+            type="com.reddit.woahdude.ui.list.PostViewHolder" />
     </data>
 
     <androidx.cardview.widget.CardView

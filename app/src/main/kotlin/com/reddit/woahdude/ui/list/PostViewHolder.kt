@@ -1,4 +1,4 @@
-package com.reddit.woahdude.ui
+package com.reddit.woahdude.ui.list
 
 import android.app.Activity
 import android.content.ClipData

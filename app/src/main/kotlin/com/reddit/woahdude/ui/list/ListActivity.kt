@@ -1,12 +1,8 @@
-package com.reddit.woahdude.ui
+package com.reddit.woahdude.ui.list
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.widget.Toolbar
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -19,21 +15,20 @@ import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.google.android.material.snackbar.Snackbar
 import com.reddit.woahdude.R
-import com.reddit.woahdude.common.GlideApp
-import com.reddit.woahdude.ui.common.ViewModelFactory
 import com.reddit.woahdude.app.WDApplication
+import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ActivityListBinding
 import com.reddit.woahdude.model.RedditPost
 import com.reddit.woahdude.model.imageLoadRequest
 import com.reddit.woahdude.ui.common.BaseActivity
+import com.reddit.woahdude.ui.common.ViewModelFactory
+import com.reddit.woahdude.ui.settings.SettingsActivity
 import com.reddit.woahdude.util.bindSharedPreference
 import com.reddit.woahdude.util.weightChildVisibility
-import com.reddit.woahdude.video.holder.VideoPlayerHoldersPool
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import timber.log.Timber
-import javax.inject.Inject
 
 
 private const val LAST_VIEWED_POSITION = "LAST_VIEWED_POSITION"
@@ -48,15 +43,10 @@ class ListActivity : BaseActivity() {
     private var lastViewedPosition by bindSharedPreference(this, LAST_VIEWED_POSITION, 0)
     private var currentPosition: Int = 0
 
-    @Inject
-    lateinit var playerHoldersPool: VideoPlayerHoldersPool
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val component = (application as WDApplication).component
-        component.inject(this)
-
         viewModel = ViewModelProviders.of(this, ViewModelFactory(component)).get(ListViewModel::class.java)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_list)
         binding.postList.apply {
@@ -101,32 +91,29 @@ class ListActivity : BaseActivity() {
             }
         })
 
-        val toolbar: Toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        binding.toolbar.apply {
+            title = viewModel.getTitle()
+            inflateMenu(R.menu.menu_main)
+            setOnMenuItemClickListener { item ->
+                if (item.itemId == R.id.settings) {
+                    startActivityForResult(
+                        Intent(this@ListActivity, SettingsActivity::class.java),
+                        SettingsActivity.SETTINGS_REQUEST_CODE
+                    )
+                }
+                return@setOnMenuItemClickListener true
+            }
+        }
     }
 
     override fun onPause() {
-        playerHoldersPool.pauseCurrent()
+        viewModel.playerHoldersPool.pauseCurrent()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        playerHoldersPool.resumeCurrent()
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu) : Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.settings) {
-            startActivityForResult(Intent(this, SettingsActivity::class.java), SettingsActivity.SETTINGS_REQUEST_CODE)
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+        viewModel.playerHoldersPool.resumeCurrent()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -135,13 +122,14 @@ class ListActivity : BaseActivity() {
             when(resultCode) {
                 SettingsActivity.SETTINGS_RESULT_REFRESH_NEEDED -> {
                     viewModel.refreshPosts()
+                    binding.toolbar.title = viewModel.getTitle()
                 }
             }
         }
     }
 
     override fun onDestroy() {
-        playerHoldersPool.release()
+        viewModel.playerHoldersPool.release()
         visibleViewsDisposable.dispose()
         if (isFinishing) {
             lastViewedPosition = currentPosition
@@ -190,7 +178,7 @@ class ListActivity : BaseActivity() {
                 .doOnNext { currentPosition = binding.postList.getChildAdapterPosition(it) }
                 .subscribe(
                         { mostVisibleChild ->
-                            playerHoldersPool.pauseCurrent() // pause playback when the focus changes
+                            viewModel.playerHoldersPool.pauseCurrent() // pause playback when the focus changes
                             val holder = recyclerView.findContainingViewHolder(mostVisibleChild)
                             (holder as PostViewHolder).showVideoIfNeeded()
                         },
@@ -199,8 +187,10 @@ class ListActivity : BaseActivity() {
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                visibleStatePublishSubject.onNext(VisibleState(llm.findFirstVisibleItemPosition(),
-                        llm.findLastVisibleItemPosition()))
+                visibleStatePublishSubject.onNext(
+                    VisibleState(llm.findFirstVisibleItemPosition(),
+                        llm.findLastVisibleItemPosition())
+                )
             }
         })
 
