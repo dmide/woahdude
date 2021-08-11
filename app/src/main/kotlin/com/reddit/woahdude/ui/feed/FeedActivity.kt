@@ -65,6 +65,13 @@ abstract class FeedActivity: BaseActivity() {
         }
     }
 
+    override fun onDestroy() {
+        if (!isVideoPoolCleared) {
+            viewModel.playerHoldersPool.clear()
+        }
+        super.onDestroy()
+    }
+
     abstract fun setTitle(title: String)
 
     abstract fun getRootView(): View
