@@ -82,7 +82,7 @@ fun Disposable.addTo(compositeDisposable: CompositeDisposable) {
     compositeDisposable.add(this)
 }
 
-fun Handler.clearAndPostDelayed(delay: Long, vararg actions: () -> Unit) {
+fun Handler.clearAndPostDelayed(delay: Long, vararg actions: Runnable) {
     actions.forEach {
         removeCallbacks(it)
         postDelayed(it, delay)

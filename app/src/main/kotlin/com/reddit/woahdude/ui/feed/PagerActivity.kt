@@ -25,6 +25,10 @@ class PagerActivity : FeedActivity() {
         resources.getDimension(R.dimen.appbar_height)
     }
     private val listAdapter = PagerAdapter()
+    private val hideToolbar = Runnable { binding.toolbar.animate().translationY(-toolbarHeight).start() }
+    private val showToolbar = Runnable { binding.toolbar.animate().translationY(0f).start() }
+    private val hideFab = Runnable { binding.fab.hide() }
+    private val showFab = Runnable { binding.fab.show() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +63,8 @@ class PagerActivity : FeedActivity() {
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (ev.action == ACTION_UP && ev.y < toolbarHeight && binding.toolbar.translationY != 0f) {
-            showToolbar()
-            viewModel.handler.clearAndPostDelayed(HIDE_DELAY_MS, ::hideToolbar)
+            showToolbar.run()
+            viewModel.handler.clearAndPostDelayed(HIDE_DELAY_MS, hideToolbar)
             return true
         }
         return super.dispatchTouchEvent(ev)
@@ -75,14 +79,6 @@ class PagerActivity : FeedActivity() {
     // https://stackoverflow.com/a/62113146/2093236
     private fun getRecyclerView() = binding.postPager[0] as RecyclerView
 
-    private fun hideToolbar() = binding.toolbar.animate().translationY(-toolbarHeight).start()
-
-    private fun showToolbar() = binding.toolbar.animate().translationY(0f).start()
-
-    private fun hideFab() = binding.fab.hide()
-
-    private fun showFab() = binding.fab.show()
-
     private inner class PageChangeListener : ViewPager2.OnPageChangeCallback() {
         private var isAutoPlayHandled = false
 
@@ -94,12 +90,12 @@ class PagerActivity : FeedActivity() {
 
         override fun onPageSelected(position: Int) {
             if (position > currentPosition) {
-                hideFab()
-                hideToolbar()
+                hideFab.run()
+                hideToolbar.run()
             } else {
-                if (position != 0) showFab()
-                showToolbar()
-                viewModel.handler.clearAndPostDelayed(HIDE_DELAY_MS, ::hideToolbar, ::hideFab)
+                if (position != 0) showFab.run()
+                showToolbar.run()
+                viewModel.handler.clearAndPostDelayed(HIDE_DELAY_MS, hideToolbar, hideFab)
             }
             currentPosition = position
 
