@@ -1,5 +1,6 @@
-package com.reddit.woahdude.ui.list
+package com.reddit.woahdude.ui.feed
 
+import android.os.Handler
 import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -31,6 +32,8 @@ class ListViewModel : BaseViewModel() {
     lateinit var localStorage: LocalStorage
     @Inject
     lateinit var playerHoldersPool: VideoPlayerHoldersPool
+    @Inject
+    lateinit var handler: Handler
 
     private val _loadingVisibility: MutableLiveData<Boolean> = MutableLiveData()
     private val _refreshMessage: MutableLiveData<RefreshMessage> = MutableLiveData()

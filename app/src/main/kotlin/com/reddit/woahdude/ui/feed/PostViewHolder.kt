@@ -1,4 +1,4 @@
-package com.reddit.woahdude.ui.list
+package com.reddit.woahdude.ui.feed
 
 import android.app.Activity
 import android.content.ClipData
@@ -6,9 +6,14 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Color
 import android.net.Uri
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,10 +22,7 @@ import com.reddit.woahdude.R
 import com.reddit.woahdude.common.GlideApp
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.model.*
-import com.reddit.woahdude.util.Metrics
-import com.reddit.woahdude.util.addTo
-import com.reddit.woahdude.util.onFinish
-import com.reddit.woahdude.util.toast
+import com.reddit.woahdude.util.*
 import com.reddit.woahdude.video.holder.PlayerState
 import com.reddit.woahdude.video.holder.VideoPlayerHolder
 import com.reddit.woahdude.video.holder.VideoPlayerHoldersPool
@@ -44,11 +46,60 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     val postType: LiveData<String> = MutableLiveData()
     val postComments: LiveData<String> = MutableLiveData()
 
+    private val controls: List<View> = listOf(binding.title, binding.comments, binding.type, binding.sound)
+
     private var redditPost: RedditPost? = null
     private var videoPlayerHolder: VideoPlayerHolder? = null
     private var compositeDisposable = CompositeDisposable()
+    private var isFullscreen = false
+
+    init {
+        binding.videoView.setOnClickListener {
+            toggleVolume()
+        }
+    }
+
+    fun layoutToFullscreen() {
+        isFullscreen = true
+
+        binding.container.apply {
+            layoutParams.height = Metrics.contentHeight
+            setBackgroundColor(Color.BLACK)
+        }
+        binding.card.apply {
+            layoutParams.height = MATCH_PARENT
+            (layoutParams as ViewGroup.MarginLayoutParams).setMargins(0, 0, 0, 0)
+        }
+        controls.forEach {
+            if (it is TextView) {
+                it.setShadowLayer(18f, 0f, 0f, Color.BLACK)
+                it.setTextColor(Color.WHITE)
+            }
+        }
+
+        binding.sound.setOnClickListener {
+            toggleVolume()
+        }
+        binding.videoView.setOnClickListener(null)
+        binding.videoView.isClickable = false
+        binding.imageView.isClickable = false
+        binding.container.setOnClickListener {
+            controls.forEach {
+                it.animate()
+                    .alpha(if (it.alpha == 1f) 0f else 1f)
+                    .setDuration(200L)
+                    .start()
+            }
+        }
+    }
 
     fun bind(redditPost: RedditPost?) {
+        if (isFullscreen){
+            controls.forEach {
+                it.alpha = 0f
+            }
+        }
+
         this.redditPost = redditPost
 
         if (redditPost == null) {
@@ -94,7 +145,7 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
         compositeDisposable.clear()
         playerHolder.stateObservable.subscribe { state ->
-            when(state) {
+            when (state) {
                 is PlayerState.Data -> {
                     binding.videoViewContainer.isVisible = true
 
@@ -106,7 +157,8 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
                     binding.videoViewContainer.setAspectRatio(w.toFloat() / h.toFloat())
 
                     binding.sound.isVisible = state.hasSound
-                    val soundIcon = if (state.isSoundEnabled) R.drawable.ic_volume_on else R.drawable.ic_volume_off
+                    val soundIcon =
+                        if (state.isSoundEnabled) R.drawable.ic_volume_on else R.drawable.ic_volume_off
                     binding.sound.setImageResource(soundIcon)
                 }
                 is PlayerState.Error -> {
@@ -154,12 +206,6 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
         context.toast(resources.getText(R.string.link_copied_to_clipboard))
     }
 
-    fun onVideoClick() {
-        if (redditPost?.getVideoUrl() != null) {
-            videoPlayerHolder?.toggleVolume()
-        }
-    }
-
     fun externalResButtonVisibility(): Int {
         return if (redditPost?.shouldShowExternalResButton() == true) VISIBLE else GONE
     }
@@ -170,6 +216,12 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
 
     fun videoViewVisibility(): Int {
         return if (redditPost?.getVideoUrl() != null) VISIBLE else GONE
+    }
+
+    private fun toggleVolume() {
+        if (redditPost?.getVideoUrl() != null) {
+            videoPlayerHolder?.toggleVolume()
+        }
     }
 
     private fun onError() {

@@ -14,6 +14,7 @@
     <!-- Settings   -->
     <string name="settings">Settings</string>
     <string name="filter_content">Show only media posts</string>
+    <string name="feed_pager_enabled">Fullscreen feed</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="privacy_policy_url">https://sites.google.com/view/woahdude-privacy/home</string>
     <string name="selected_subreddit">Subreddit</string>

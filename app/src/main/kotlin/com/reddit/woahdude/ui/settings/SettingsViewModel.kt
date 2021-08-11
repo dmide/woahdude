@@ -39,6 +39,13 @@ class SettingsViewModel: BaseViewModel() {
         stateSubject.onNext(currentState.copy(isFilteringNonMediaPosts = isFiltering))
     }
 
+    fun onFeedToggled() {
+        val currentState = stateSubject.value!!
+        val isPagerFeed = !currentState.isPagerFeed
+        localStorage.isPagerLayoutEnabled = isPagerFeed
+        stateSubject.onNext(currentState.copy(isPagerFeed = isPagerFeed))
+    }
+
     fun onNewSubredditSelected(text: String) {
         val selection = text.let {
             if (it.contains("/")) {
@@ -52,5 +59,7 @@ class SettingsViewModel: BaseViewModel() {
         stateSubject.onNext(currentState.copy(selectedSubreddit = selection))
     }
 
-    fun isStateChanged() = stateSubject.value != initialState
+    fun isStateChanged() = currentState != initialState
+
+    fun isRestartNeeded() = currentState.isPagerFeed != initialState.isPagerFeed
 }

@@ -1,4 +1,4 @@
-package com.reddit.woahdude.ui.list
+package com.reddit.woahdude.ui.feed
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -10,7 +10,7 @@ import com.reddit.woahdude.app.WDApplication
 import com.reddit.woahdude.databinding.ListItemBinding
 import com.reddit.woahdude.model.RedditPost
 
-class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCallback()) {
+open class ListAdapter : PagedListAdapter<RedditPost, PostViewHolder>(ListDiffUtilCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding: ListItemBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.context), R.layout.list_item, parent, false)

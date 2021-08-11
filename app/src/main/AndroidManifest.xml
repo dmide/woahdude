@@ -14,14 +14,15 @@
         tools:replace="android:allowBackup">
 
         <activity android:name=".ui.settings.SettingsActivity"/>
-        <activity android:name=".ui.list.ListActivity"
-            android:theme="@style/AppTheme" />
+        <activity android:name=".ui.common.StartActivity"/>
+        <activity android:name=".ui.feed.PagerActivity"/>
+        <activity android:name=".ui.feed.ListActivity"/>
 
         <!-- To make launcher icon stay on the home screen -->
         <!-- when the launcher Activity is changed. -->
         <activity-alias
             android:name=".LauncherActivityAlias"
-            android:targetActivity=".ui.list.ListActivity">
+            android:targetActivity=".ui.common.StartActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

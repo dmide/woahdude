@@ -20,6 +20,7 @@ class SettingsActivity : BaseActivity() {
     companion object {
         const val SETTINGS_REQUEST_CODE = 1337
         const val SETTINGS_RESULT_REFRESH_NEEDED = SETTINGS_REQUEST_CODE + 1
+        const val SETTINGS_RESULT_RESTART_NEEDED = SETTINGS_REQUEST_CODE + 2
     }
 
     private val compositeDisposable = CompositeDisposable()
@@ -38,6 +39,7 @@ class SettingsActivity : BaseActivity() {
 
         viewModel.stateObservable.subscribe { state ->
             binding.filterSwitch.isChecked = state.isFilteringNonMediaPosts
+            binding.feedSwitch.isChecked = state.isPagerFeed
             binding.subredditValue.text = state.selectedSubredditTitle
         }.addTo(compositeDisposable)
 
@@ -57,10 +59,16 @@ class SettingsActivity : BaseActivity() {
         binding.subredditContainer.setOnClickListener {
             showSubredditSelectionDialog()
         }
+
+        binding.feedContainer.setOnClickListener {
+            viewModel.onFeedToggled()
+        }
     }
 
     override fun onBackPressed() {
-        if (viewModel.isStateChanged()) {
+        if (viewModel.isRestartNeeded()){
+            setResult(SETTINGS_RESULT_RESTART_NEEDED)
+        } else if (viewModel.isStateChanged()) {
             setResult(SETTINGS_RESULT_REFRESH_NEEDED)
         }
         super.onBackPressed()

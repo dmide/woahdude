@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.os.Handler
 import android.view.View
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -79,4 +80,11 @@ fun Context.toast(text: CharSequence, long: Boolean = false): Toast =
 
 fun Disposable.addTo(compositeDisposable: CompositeDisposable) {
     compositeDisposable.add(this)
+}
+
+fun Handler.clearAndPostDelayed(delay: Long, vararg actions: () -> Unit) {
+    actions.forEach {
+        removeCallbacks(it)
+        postDelayed(it, delay)
+    }
 }
