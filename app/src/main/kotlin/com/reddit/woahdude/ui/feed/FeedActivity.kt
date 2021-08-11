@@ -93,11 +93,18 @@ abstract class FeedActivity: BaseActivity() {
             title = viewModel.getTitle()
             inflateMenu(R.menu.menu_main)
             setOnMenuItemClickListener { item ->
-                if (item.itemId == R.id.settings) {
-                    startActivityForResult(
-                        Intent(this@FeedActivity, SettingsActivity::class.java),
-                        SettingsActivity.SETTINGS_REQUEST_CODE
-                    )
+                when(item.itemId) {
+                    R.id.settings -> {
+                        startActivityForResult(
+                            Intent(this@FeedActivity, SettingsActivity::class.java),
+                            SettingsActivity.SETTINGS_REQUEST_CODE
+                        )
+                    }
+                    R.id.feed_mode -> {
+                        viewModel.localStorage.isPagerLayoutEnabled = !viewModel.localStorage.isPagerLayoutEnabled
+                        finish()
+                        startActivity(Intent(this@FeedActivity, StartActivity::class.java))
+                    }
                 }
                 return@setOnMenuItemClickListener true
             }

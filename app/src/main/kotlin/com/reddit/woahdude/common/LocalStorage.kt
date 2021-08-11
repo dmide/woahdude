@@ -18,6 +18,7 @@ class LocalStorage(val context: Context) {
     var lastViewedPosition by bindSharedPreference(context, LAST_VIEWED_POSITION, 0)
     var isFilteringNonMediaPosts by bindSharedPreference(context, FILTER_NON_MEDIA_POSTS, true)
     var selectedSubreddit by bindSharedPreference(context, SUBREDDIT, SUBREDDIT_DEFAULT)
+    //TODO good place to run A/B tests
     var isPagerLayoutEnabled by bindSharedPreference(context, PAGER_LAYOUT_ENABLED, true)
 
     val settingsState get() = SettingsState(
