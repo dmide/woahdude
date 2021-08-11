@@ -200,6 +200,8 @@ class PostViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHo
     }
 
     fun onTypeClick() {
+        if (binding.type.alpha != 1f) return
+
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("woahdude link", redditPost?.permalinkUrl())
         clipboard.setPrimaryClip(clip)
