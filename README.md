@@ -1,4 +1,4 @@
-Pure Kotlin Android reader for the *r/woahdude* subreddit.
+Android reader for subreddit of choice with focus on media content and immersion. Supports list and fullscreen slide layouts as well as offline playback.
 
 [Google play page][play]
 
