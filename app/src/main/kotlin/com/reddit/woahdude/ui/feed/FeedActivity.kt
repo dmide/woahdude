@@ -28,12 +28,15 @@ abstract class FeedActivity: BaseActivity() {
         val component = (application as WDApplication).component
         viewModel = ViewModelProviders.of(this, ViewModelFactory(component)).get(ListViewModel::class.java)
 
+        currentPosition = viewModel.lastViewedPosition
+
         viewModel.refreshMessage.observe(this, Observer { message ->
             if (message != null) showRefreshSnack(message) else hideRefreshSnack()
         })
     }
 
     override fun onPause() {
+        viewModel.lastViewedPosition = currentPosition
         viewModel.playerHoldersPool.pauseCurrent()
         super.onPause()
     }
@@ -43,22 +46,13 @@ abstract class FeedActivity: BaseActivity() {
         viewModel.playerHoldersPool.resumeCurrent()
     }
 
-    override fun onStop() {
-        viewModel.lastViewedPosition = currentPosition
-        super.onStop()
-    }
-
-    override fun onDestroy() {
-        viewModel.playerHoldersPool.release()
-        super.onDestroy()
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == SettingsActivity.SETTINGS_REQUEST_CODE) {
             when(resultCode) {
                 SettingsActivity.SETTINGS_RESULT_RESTART_NEEDED -> {
                     finish()
+                    viewModel.playerHoldersPool.release()
                     startActivity(Intent(this, StartActivity::class.java))
                 }
                 SettingsActivity.SETTINGS_RESULT_REFRESH_NEEDED -> {
@@ -103,6 +97,7 @@ abstract class FeedActivity: BaseActivity() {
                     R.id.feed_mode -> {
                         viewModel.localStorage.isPagerLayoutEnabled = !viewModel.localStorage.isPagerLayoutEnabled
                         finish()
+                        viewModel.playerHoldersPool.release()
                         startActivity(Intent(this@FeedActivity, StartActivity::class.java))
                     }
                 }
