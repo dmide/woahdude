@@ -19,6 +19,7 @@ abstract class FeedActivity: BaseActivity() {
     protected lateinit var viewModel: ListViewModel
 
     protected var currentPosition: Int = 0
+    protected var isVideoPoolCleared = false
 
     private var snackbar: Snackbar? = null
 
@@ -52,7 +53,8 @@ abstract class FeedActivity: BaseActivity() {
             when(resultCode) {
                 SettingsActivity.SETTINGS_RESULT_RESTART_NEEDED -> {
                     finish()
-                    viewModel.playerHoldersPool.release()
+                    viewModel.playerHoldersPool.clear()
+                    isVideoPoolCleared = true
                     startActivity(Intent(this, StartActivity::class.java))
                 }
                 SettingsActivity.SETTINGS_RESULT_REFRESH_NEEDED -> {
@@ -97,7 +99,8 @@ abstract class FeedActivity: BaseActivity() {
                     R.id.feed_mode -> {
                         viewModel.localStorage.isPagerLayoutEnabled = !viewModel.localStorage.isPagerLayoutEnabled
                         finish()
-                        viewModel.playerHoldersPool.release()
+                        viewModel.playerHoldersPool.clear()
+                        isVideoPoolCleared = true
                         startActivity(Intent(this@FeedActivity, StartActivity::class.java))
                     }
                 }

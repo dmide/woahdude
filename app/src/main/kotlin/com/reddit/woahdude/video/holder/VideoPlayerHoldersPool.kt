@@ -32,7 +32,7 @@ class VideoPlayerHoldersPool @Inject constructor(val playerHolderProvider: Provi
         currentPlayer?.resume()
     }
 
-    fun release() {
+    fun clear() {
         currentPlayer = null
         used.apply {
             forEach { it.release() }

@@ -80,6 +80,9 @@ class ListActivity : FeedActivity() {
 
     override fun onDestroy() {
         visibleViewsDisposable?.dispose()
+        if (!isVideoPoolCleared) {
+            viewModel.playerHoldersPool.clear()
+        }
         super.onDestroy()
     }
 
