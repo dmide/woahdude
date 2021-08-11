@@ -24,11 +24,8 @@ object Metrics {
         private set
     var density: Float = 0.toFloat()
         private set
-    private var isInitialised: Boolean = false
 
-    fun initIfNeeded(activity: Activity) {
-        if (isInitialised) return
-
+    fun init(activity: Activity) {
         val metrics = DisplayMetrics()
         val windowManager = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         windowManager.defaultDisplay.getMetrics(metrics)
@@ -58,7 +55,5 @@ object Metrics {
 
         contentHeight = deviceHeight - navBarHeight - statusBarHeight
         optimalContentHeight = contentHeight - navBarHeight
-
-        isInitialised = true
     }
 }
