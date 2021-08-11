@@ -15,8 +15,7 @@
 
         <activity android:name=".ui.settings.SettingsActivity"/>
         <activity android:name=".ui.common.StartActivity"/>
-        <activity android:name=".ui.feed.PagerActivity"
-            android:screenOrientation="portrait"/>
+        <activity android:name=".ui.feed.PagerActivity"/>
         <activity android:name=".ui.feed.ListActivity"/>
 
         <!-- To make launcher icon stay on the home screen -->
